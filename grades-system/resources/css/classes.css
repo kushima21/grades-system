@@ -1,0 +1,256 @@
+    .classes-main-container {
+        width: 100%;
+        height: 100%;
+    }
+
+    .span {
+        display: flex;
+        align-items: center;
+    }
+
+    .span span {
+        margin: 10px;
+        font-size: 14px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        color: #0e0d0d69;
+    }
+
+    .my-header {
+        padding: 10px;
+        font-size: 28px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+    .search-bar {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: right;
+        padding: 20px;
+    }
+
+    .search-bar input {
+            width: 300px;
+            height: 32px;
+            padding-left: 5px;
+            border-radius: 7px;
+            border: none;
+            box-shadow: 0px 0px 4px 0px;
+    }
+
+
+    .classes-main-container-box {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        border-top: 2px solid rgba(0, 0, 0, 0.064);
+    }
+
+    .classes-modal-container {
+        width: 50%;
+        height: 60%;
+        box-shadow: 0px 0px 10px rgba(128, 128, 128, 0.472);
+        position: fixed;
+        z-index: 2000;
+        background: #fff;
+        left: 35%;
+        border-radius: 20px;
+        display: none;
+    }
+
+    .classes-modal-header {
+        font-weight: 400;
+        font-size: 25px;
+        padding: 20px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+ .classes-form-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.class-wrapper-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 columns mag-atbang */
+    gap: 20px 50px; /* row-gap, column-gap */
+    width: 100%; /* adjust width as needed */
+    padding-top: 10px;
+}
+
+.classes-info {
+    display: flex;
+    flex-direction: column; /* label on top, input below */
+    align-items: flex-start;
+    gap: 5px; /* small space between label and input */
+}
+
+.classes-info label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.classes-info em {
+    font-size: 13px;
+    color: gray;
+}
+
+/* Style for input and select fields */
+.classes-info input,
+.classes-info select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #88888865;
+    border-radius: 5px;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+/* Focus effect */
+.classes-info input:focus,
+.classes-info select:focus {
+    border-color: #ff4d00;
+}
+
+/* Responsive (stack vertically on smaller screens) */
+@media (max-width: 768px) {
+    .class-wrapper-container {
+        grid-template-columns: 1fr;
+        width: 90%;
+    }
+}
+
+.classes-btn {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+}
+
+.classes-btn button {
+    width: 130px;
+    height: 42px;
+    font-size: 11px;
+    border: none;
+    border-radius: 20px;
+    background: linear-gradient(rgb(255, 64, 0), rgb(189, 67, 1));
+    color: #fff;
+}
+
+/*close modal */
+
+    .iconBtbn {
+        display: flex;
+        position: fixed;
+        top: 90%;
+        left: 90%;
+    }
+
+
+    .iconBtn .circle-bg {
+        color: rgb(255, 83, 21);
+        font-size: 3.5rem; /* circle size */
+    }
+
+    /* Layers icon inside circle */
+    .iconBtn .layers-icon {
+        color: rgba(255, 255, 255, 0.61); /* para klaro inside orange circle */
+        font-size: 22px; /* adjust as needed */
+        padding-right: 10px;
+    }
+
+    /* Plus icon positioned upper-right */
+    .iconBtn .plus-icon {
+        color: rgba(255, 255, 255, 0.678);
+        font-size: 15px;
+        margin-left: 12px;  /* push to right */
+        margin-top: -13px; /* push up */
+    }
+
+
+    .classes-box {
+        width: 330px;
+        height: 310px;
+        border-radius: 15px;
+        background-color: #fff;
+        box-shadow: 0px 0px 2px 0;
+    }
+
+    .c-head-container {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.064);
+
+    }
+
+    .logo-image {
+        width: 90px;
+    }
+
+     .m-subcontainer {
+        padding-left: 5px;
+        margin: 5px;
+    }
+
+    .my-box-head {
+        padding-top: 10px;
+        font-size: 18px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+    .my-descriptive {
+        padding-top: 5px;
+        font-size: 25px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+   .details {
+    padding: 10px 20px;
+    width: 100%;
+    display: flex;
+    flex-direction: column; /* Arrange items vertically */
+    gap: 10px; /* spacing between each .d-info */
+    border-bottom: 2px solid rgba(0, 0, 0, 0.064);
+    padding-bottom: 20px;
+}
+
+.d-info {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+}
+
+.d-info span {
+    margin-left: 8px;
+    color: #555;
+    font-weight: 400;
+}
+
+.c-bottom-c {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px;
+}
+
+.c-details span {
+    font-style: italic;
+}
+
+.c-bottom-c i {
+    font-size: 28px;
+    padding-right: 45px;
+    color: #a12c01;
+}
