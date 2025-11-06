@@ -53,7 +53,7 @@
 
     .classes-modal-container {
         width: 50%;
-        height: 60%;
+        height: 65%;
         box-shadow: 0px 0px 10px rgba(128, 128, 128, 0.472);
         position: fixed;
         z-index: 2000;

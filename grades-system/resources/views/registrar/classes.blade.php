@@ -67,6 +67,10 @@
                             <label for="schedule">Schedule: <em>*Example: Monday, Tuesday, Wednesday*</em></label>
                             <input type="text" placeholder="Enter Schedule Class...">
                         </div>
+                           <div class="classes-info">
+                            <label for="schedule">Set: <em>*Example: Set A, Set B, CS, BSDE*</em></label>
+                            <input type="text" placeholder="Enter Schedule Class...">
+                        </div>
                         <div class="classes-btn">
                             <button type="submit" name="submit">Create</button>
                             <button type="button" id="closeModalBtn">Close</button>
