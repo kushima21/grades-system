@@ -1,0 +1,77 @@
+.my_grades-main-container {
+    width: 100%;
+    height: 100%;
+}
+
+.span {
+        display: flex;
+        align-items: center;
+    }
+
+    .span span {
+        margin: 10px;
+        font-size: 14px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        color: #0e0d0d69;
+    }
+
+    .my-header {
+        color: rgb(0, 0, 18);
+        padding: 10px;
+        font-size: 25px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+    .search-bar {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: right;
+        padding: 20px;
+    }
+
+    .search-bar input {
+            width: 400px;
+            height: 35px;
+            padding-left: 5px;
+            border-radius: 7px;
+            border: none;
+            box-shadow: 0px 0px 4px 0px;
+    }
+
+
+    .my_grades-container-box {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: left;
+        gap: 20px;
+        flex-wrap: wrap;
+        padding-top: 10px;
+        padding: 10px;
+    }
+
+    .my-grades-box {
+        width: 350px;
+        height: 350px;
+        box-shadow: 0px 0px 5px 0px gray;
+        border-radius: 12px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+    .my-class-header {
+        width: 100%;
+        height: 110px;
+        background: #0e0d0d69;
+        border-radius: 12px;
+    }
+
+    .my-c {
+        padding: 20px;
+        font-size: 20px;
+    }
+
+    .subheader {
+        padding-left: 20px;
+        font-size: 24px;
+    }

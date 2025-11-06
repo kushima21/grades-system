@@ -1,0 +1,250 @@
+.classes-view-main-container {
+    width: 100%;
+    height: 100%;
+}
+.span {
+        display: flex;
+        align-items: center;
+    }
+
+    .span span {
+        margin: 10px;
+        font-size: 14px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        color: #0e0d0d69;
+    }
+
+    .my-header {
+        padding: 10px;
+        font-size: 18px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+    .class-header {
+        font-size: 25px;
+        padding-left: 10px;
+         font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+
+    .cv-subheader {
+        display: flex;
+        align-items: center;
+        margin: 10px;
+    }
+
+    .cv-h {
+        padding: 8px;
+    }
+   
+    .searchBox {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: right;
+        padding: 20px;
+    }
+
+     .searchBox input {
+        width: 270px;
+        height: 32px;
+        padding-left: 5px;
+        border-radius: 5px;
+     }
+
+     .student-main-container {
+        width: 100%;
+     }
+
+      .iconBtbn {
+        display: flex;
+        position: fixed;
+        top: 90%;
+        left: 90%;
+    }
+
+
+    .iconBtn .circle-bg {
+        color: rgb(255, 83, 21);
+        font-size: 3.5rem; /* circle size */
+    }
+
+    /* Layers icon inside circle */
+    .iconBtn .layers-icon {
+        color: rgba(255, 255, 255, 0.61); /* para klaro inside orange circle */
+        font-size: 22px; /* adjust as needed */
+        padding-right: 10px;
+    }
+
+    /* Plus icon positioned upper-right */
+    .iconBtn .plus-icon {
+        color: rgba(255, 255, 255, 0.678);
+        font-size: 15px;
+        margin-left: 12px;  /* push to right */
+        margin-top: -13px; /* push up */
+    }
+
+
+    /*add-student-modal-container*/
+    .add-student-modal-container {
+        width: 700px;
+        height: 430px;
+        border-radius: 15px;
+        background-color: #fff;
+        box-shadow: 0px 0px 2px 0;
+        position: fixed;
+        left: 35%;
+        z-index: 1000;
+        display: none;
+    }
+
+    .add-student-modal-container.show {
+    display: block; /* para makita ang modal */
+}
+
+    .add-header {
+        padding-top: 10px;
+        font-size: 22px;
+        text-align: center;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+    .csv-container {
+     flex-wrap: wrap;
+     width: 100%;
+     display: flex;
+     padding-top: 10px;
+     justify-content: center;
+     height: max-content;
+}
+
+.csv-container form {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.csv-container input {
+    width: 90%;
+    height: 40px;
+   margin-bottom: 10px;
+    border: 1px solid #ccc;
+
+   display: flex;
+   border-radius: 7px;
+}
+.csv-container input[type="file"] {
+    width: 90%;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    text-align: center;       /* Horizontal center */
+    line-height: 40px;        /* Vertical center */
+    padding-left: 10px;
+}
+.dropdown-menu {
+    position: absolute;      /* Para mo-pop under sa input */
+    top: 100%;              /* Diretso sa ubos sa input */
+    left: 0;
+    width: 100%;            /* Same width as parent container */
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    max-height: 200px;      /* Limit height para di mu taas kaayo */
+    overflow-y: auto;       /* Scroll kung taas na */
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: none;          /* Hidden by default */
+    padding: 0;
+    margin-top: 2px;
+}
+
+.dropdown-menu div {
+    padding: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.dropdown-menu div:hover {
+    background: #f0f0f0;
+}
+
+/* Para makita balik kung naay sulod */
+.dropdown-menu.show {
+    display: block;
+}
+
+
+.save-btn {
+    width: 200px;    
+    height: 35px;
+    border-radius: 7px;
+    border: none;
+    background: linear-gradient(rgba(255, 102, 0, 0.884), rgba(255, 68, 0, 0.897));
+    color: white;
+    font-size: 12px;
+}
+
+.csv-p {
+    font-size: 12px;
+    padding-top: 5px;
+}
+
+.class-view-form-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-top: 10px;
+}
+
+.class-view-form-container form {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* duha ka column */
+    gap: 20px 40px; /* row gap, column gap */
+}
+
+.info-add {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.info-add label {
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.info-add input {
+    width: 100%;
+    height: 35px;
+    border-radius: 7px;
+    border: 1px solid #ccc;
+    padding-left: 10px;
+}
+
+/* buttons always centered and take full row */
+.add-studentBtn {
+    grid-column: span 2; /* mo-cover sa duha ka columns */
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.add-studentBtn button {
+    width: 130px;
+    height: 35px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    background: linear-gradient(rgba(255, 102, 0, 0.884), rgba(255, 68, 0, 0.897));
+    color: #fff;
+    font-size: 12px;
+    transition: 0.2s;
+}
+
+.add-studentBtn button:hover {
+    opacity: 0.9;
+}
+
+    /*close */
