@@ -43,9 +43,15 @@ Route::get('/classes', function () {
     return view('registrar.classes');
 });
 
+Route::get('/my_class_archive', function () {
+    return view('registrar.my_class_archive');
+});
+
+
 Route::get('/classes_view', function () {
     return view('registrar.classes_view');
 });
+
 
 // Login
 
