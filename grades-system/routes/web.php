@@ -52,6 +52,12 @@ Route::get('/classes_view', function () {
     return view('registrar.classes_view');
 });
 
+//user
+
+Route::get('/users', function () {
+    return view('admin.users');
+});
+
 
 // Login
 

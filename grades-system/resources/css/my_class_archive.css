@@ -33,7 +33,7 @@
     display: flex;
     align-items: center;
     padding-left: 10px;
-    font-size: 18px; /* gi-dako ang emoji */
+    font-size: 15px; /* gi-dako ang emoji */
 }
 
 .archive-folder-box:hover {
@@ -44,12 +44,13 @@
 .year-box {
     width: 96%;
     height: 40px;
-    display: flex;
     align-items: center;
     margin-left: 4%;
     font-size: 15px; /* gi-dako ang emoji */
     padding-left: 10px;
     border-radius: 7px;
+    display: none;
+    padding-top: 10px;
 }
 
 .year-box:hover {
@@ -61,12 +62,15 @@
 .semester-box {
     width: 94%;
     height: 40px;
-    display: flex;
     align-items: center;
     margin-left: 6%;
     font-size: 15px; /* gi-dako ang emoji */
     padding-left: 10px;
     border-radius: 7px; 
+    display: none;
+    padding-top: 10px;
+
+
 }
 
 .semester-box:hover {
@@ -74,3 +78,182 @@
     cursor: pointer;
     transition: scale 0.3s;
 }
+
+.subject-box {
+    width: 94%;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    margin-left: 6%;
+    font-size: 15px; /* gi-dako ang emoji */
+    padding-left: 20px;
+    border-radius: 7px;
+    display: none;
+    padding-top: 10px;
+
+}
+
+.subject-box:hover {
+    background-color: #f0f0f0;
+    cursor: pointer;
+    transition: scale 0.3s;
+}
+
+.grade-archive-view {
+    width: 80%;
+    height: 85%;
+    box-shadow: 0px 0px 5px;
+    position: fixed;
+    background: #fff;
+    border-radius: 10px;
+    overflow-y: scroll;
+    display: none;
+}
+
+.a-header-close {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+
+    .close-icon {
+        font-size: 20px;
+        font-weight: bold;
+        color: #444;
+        cursor: pointer;
+        transition: color 0.3s ease;
+        padding-right: 20px;
+    }
+
+    .close-icon:hover {
+        color: red;
+    }
+
+.archive-view-header {
+    padding: 15px;
+    font-size: 22px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.archive-view-subheader {
+    padding-left: 20px;
+    font-size: 23px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.acad-details {
+    padding-top: 20px;
+    padding-left: 20px;
+    font-size: 15x;
+}
+
+.schedule-label {
+    padding-left: 40px;
+}
+
+.acad-container {
+    padding-top: 10px;
+    padding-left: 20px;
+}
+
+.acad-period-label {
+    padding-left: 40px;
+    font-size: 15px;
+}
+
+
+.Grades {
+    width: 100%;
+    height: 40px;
+    box-shadow: 0px 0px 1px;
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgb(0, 3, 27);
+}
+
+
+.grades-header {
+    color: rgb(208, 57, 2);
+    font-size: 20px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+
+
+.raw-columnBtn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    padding-right: 20px;
+    padding-top: 20px;
+}
+
+.rawBtn {
+    width: 180px;
+    height: 35px;
+    border: none;
+    font-size: 12px;
+    border-radius: 7px;
+    color: white;
+    background: linear-gradient(rgb(134, 42, 0), rgb(165, 44, 0));
+}
+
+.department-header {
+    font-size: 14px;
+    padding-left: 20px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.search-student-archive {
+    width: 100%;
+   display: flex;
+   align-items: center;
+    justify-content: left;
+    padding-top: 20px;
+    padding-left: 20px;
+
+}
+
+
+.search-student-archive input {
+    width: 340px;
+    height: 32px;
+    padding-left: 5px;
+} 
+
+
+.grades-wrapper-container {
+     flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.grades-table-container {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+.grades-table-container th {
+        color: gray;
+        top: 0;
+        z-index: 1;
+        font-size: 12px;
+        padding-bottom: 20px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.grades-table-container td {
+        font-size: 12px;
+        text-align: center;
+        margin-top: 10px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .grades-table-container  tr {
+        border-bottom: #7876765d 1px solid;
+        height: 70px;
+    }
