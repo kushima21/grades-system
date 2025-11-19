@@ -66,14 +66,14 @@
                         
                         
                             <div class="manage-links">
-                                <a href="#">
+                                <a href="my_grades">
                                     <span>My Grades</span>
                                 </a>
                             </div>
                            
                             
                             <div class="manage-links">
-                                <a href="#" class="#">
+                                <a href="{{ url('/my_class') }}" class="#">
                                     <span>My Classes</span>
                                 </a>
                             </div>
@@ -100,7 +100,7 @@
 
                          
                             <div class="manage-links">
-                                <a href="#">
+                                <a href="{{ url('/classes') }}">
                                     <span>All Classes</span>
                                 </a>
                             </div>
@@ -108,7 +108,7 @@
 
 
                             <div class="manage-links">
-                                <a href="#">
+                                <a href="{{ url('/my_class_archive') }}">
                                     <span>My Class Archived</span>
                                 </a>
                             </div>
@@ -116,19 +116,19 @@
                             <span class="manageHeader">Settings</span>
 
                             <div class="manage-links">
-                                <a href="#">
+                                <a href="{{ url('/courses') }}">
                                     <span>Course</span>
                                 </a>
                             </div>
 
                             <div class="manage-links">
-                                <a href="#">
+                                <a href="{{ url('/departments') }}">
                                     <span>Department</span>
                                 </a>
                             </div>
 
                             <div class="manage-links">
-                                <a href="#">
+                                <a href="{{ url('/users') }}">
                                     <span>Users</span>
                                 </a>
                             </div>

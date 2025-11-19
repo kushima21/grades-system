@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CourseController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -69,3 +70,11 @@ Route::get('/departments', function () {
 Route::get('/login', function () {
     return view('auth.login');
 });
+
+
+
+// Course Store Route
+Route::post('/course/store', [CourseController::class, 'store'])->name('course.store');
+Route::get('/courses', [CourseController::class, 'index'])->name('course.index');
+Route::delete('/course/{id}/delete', [CourseController::class, 'destroy'])->name('course.destroy');
+Route::put('/course/{id}/update', [CourseController::class, 'update'])->name('course.update');
