@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\DepartmentController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -78,3 +80,8 @@ Route::post('/course/store', [CourseController::class, 'store'])->name('course.s
 Route::get('/courses', [CourseController::class, 'index'])->name('course.index');
 Route::delete('/course/{id}/delete', [CourseController::class, 'destroy'])->name('course.destroy');
 Route::put('/course/{id}/update', [CourseController::class, 'update'])->name('course.update');
+
+
+// Department Routes
+Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
+Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');

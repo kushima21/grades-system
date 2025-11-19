@@ -24,30 +24,27 @@
                 Create New Department
             </h2>
             <div class="department-form-container">
-                 <form method="POST" action="">
+               <form method="POST" action="{{ route('departments.store') }}">
+                    @csrf
                     <div class="form-info">
-                        <label for="department_code">
-                            Department Code:
-                        </label>
-                        <input type="text" 
-                         placeholder="Enter Department Code..."
-                        >
+                        <label for="department_code">Department Code:</label>
+                        <input type="text" id="department_code" name="department_code" placeholder="Enter Department Code..." value="{{ old('department_code') }}">
+                        @error('department_code')
+                            <span class="text-red-500">{{ $message }}</span>
+                        @enderror
                     </div>
+
                     <div class="form-info">
-                        <label for="department_name">
-                            Department Name:
-                        </label>
-                        <input type="text" 
-                        placeholder="Enter Department Name..."
-                        >
+                        <label for="department_name">Department Name:</label>
+                        <input type="text" id="department_name" name="department_name" placeholder="Enter Department Name..." value="{{ old('department_name') }}">
+                        @error('department_name')
+                            <span class="text-red-500">{{ $message }}</span>
+                        @enderror
                     </div>
+
                     <div class="department-modalBtn">
-                        <button type="submit" name="submit">
-                            Create
-                        </button>
-                        <button type="button" id="closeDeptModal">
-                            Close
-                        </button>
+                        <button type="submit" name="submit">Create</button>
+                        <button type="button" id="closeDeptModal">Close</button>
                     </div>
                 </form>
             </div>
