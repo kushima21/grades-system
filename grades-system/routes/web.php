@@ -58,6 +58,11 @@ Route::get('/users', function () {
     return view('admin.users');
 });
 
+// Departments
+Route::get('/departments', function () {
+    return view('admin.departments');
+});
+
 
 // Login
 

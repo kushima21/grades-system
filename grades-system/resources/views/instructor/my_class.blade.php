@@ -23,40 +23,26 @@
 
         <div class="my-class-main-box-container">
             <div class="my-box">
-                <div class="my-box-c">
-                    <img class="logo-image" src="{{ asset('system_images/icon.png') }}" alt="LOGO">
-                    <div class="m-subcontainer">
-                        <h3 class="my-box-head">
-                            CS-10
-                        </h3>
-                        <h2 class="my-descriptive">
-                            Programming 1
-                        </h2>
-                    </div>
+               <div class="my-class-header">
+                    <h3 class="my-c">CS-10</h3>
+                    <h3 class="subheader">Programming 1</h3>
                 </div>
-                <div class="my-class-details-container">
-                    <ul>
-                        <li>
-                            School Year:
-                            <span>2025-2026</span>
-                        </li>
-                        <li>
-                            Semester:
-                            <span>First Semester</span>
-                        </li>
-                        <li>
-                            Schedule:
-                            <span>10:00am - 12:00pm M</span>
-                        </li>
-                        <li>
-                            Student:
-                            <span>35</span>
-                        </li>
-                    </ul>
+                <div class="middle-c">
+                    <span>School Year: 2025-2026</span>
+                    <br>
+                    <span>School Period: 1st Semester</span>
+                    <br>
+                    <span>Schedule: 8:00am-10:00am MTH</span>
+                    <br>
+                    <span>Total Student: 30</span>
+                    <br>
+                    <span>Status: Active</span>
                 </div>
-                <div class="my-class-bottom">
-                    <p class="email">Instructor: johnhondrada@ckcm.edu.ph</p>
-                    <button type="button" class="viewBtn">View Class</button>
+                <div class="bottom-c">
+                    <span>Instructor: John Mark Hondrada</span>
+                    <a href="#">
+                        <i class="fa-solid fa-right-from-bracket"></i> 
+                    </a>
                 </div>
             </div>
         </div>

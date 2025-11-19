@@ -91,43 +91,27 @@
                 </span>
             </div>
             <div class="classes-box">
-                <div class="c-head-container">
-                    <img class="logo-image" src="{{ asset('system_images/icon.png') }}" alt="LOGO">
-                    <div class="m-subcontainer">
-                        <h3 class="my-box-head">
-                            CS-10
-                        </h3>
-                        <h2 class="my-descriptive">
-                            Programming 1
-                        </h2>
-                    </div>
+                <div class="classes-header">
+                    <h3 class="my-c">CS-10</h3>
+                    <h3 class="subheader">Programming 1</h3>
                 </div>
-                <div class="details">
-                    <div class="d-info">
-                        Academic Year:
-                        <span>2025-2026</span>
-                    </div>
-                    <div class="d-info">
-                        Academic Period:
-                        <span>1st Semester</span>
-                    </div>
-                    <div class="d-info">
-                        Units:
-                        <span>3</span>
-                    </div>
-                    <div class="d-info">
-                        Schedule:
-                        <span>10:00am - 12:00pm Monday/Thursday/Wednesday</span>
-                    </div>
+                <div class="middle-c">
+                    <span>School Year: 2025-2026</span>
+                    <br>
+                    <span>School Period: 1st Semester</span>
+                    <br>
+                    <span>Schedule: 8:00am-10:00am MTH</span>
+                    <br>
+                    <span>Status: Active</span>
                 </div>
-                <div class="c-bottom-c">
-                    <div class="c-details">
-                        <p>Instructor</p>
-                        <span>Email: johnhondrada@ckcm.edu.ph</span>
-                    </div>
-                    <i class="fa-solid fa-right-from-bracket"></i> <!-- Exit / Logout -->
+                <div class="bottom-c">
+                    <span>Instructor: John Mark Hondrada</span>
+                    <a href="#">
+                        <i class="fa-solid fa-right-from-bracket"></i> 
+                    </a>
                 </div>
             </div>
+            
         </div>
     </div>
 <script>

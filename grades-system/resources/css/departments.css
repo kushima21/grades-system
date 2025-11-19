@@ -1,0 +1,189 @@
+.departments-main-container {
+    width: 100%;
+    height: 100%;
+}
+
+.span {
+        display: flex;
+        align-items: center;
+    }
+
+    .span span {
+        margin: 10px;
+        font-size: 14px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        color: #0e0d0d69;
+    }
+
+    .my-header {
+        padding: 10px;
+        font-size: 25px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+    .search-bar {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: right;
+        padding: 20px;
+    }
+
+        .search-bar input {
+            width: 300px;
+            height: 32px;
+            padding-left: 5px;
+            border-radius: 7px;
+            border: none;
+            box-shadow: 0px 0px 4px 0px;
+    }
+
+    .departments-wrapper-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    /*icons button */
+.iconBtbn {
+        display: flex;
+        position: fixed;
+        top: 90%;
+        left: 90%;
+    }
+
+
+    .iconBtn .circle-bg {
+        color: rgb(255, 83, 21);
+        font-size: 3.5rem; /* circle size */
+    }
+
+    /* Layers icon inside circle */
+    .iconBtn .layers-icon {
+        color: rgba(255, 255, 255, 0.61); /* para klaro inside orange circle */
+        font-size: 22px; /* adjust as needed */
+        padding-right: 10px;
+    }
+
+    /* Plus icon positioned upper-right */
+    .iconBtn .plus-icon {
+        color: rgba(255, 255, 255, 0.678);
+        font-size: 15px;
+        margin-left: 12px;  /* push to right */
+        margin-top: -13px; /* push up */
+    }
+    /*close*/
+
+    .departments-table-container {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+      .departments-table-container th {
+        color: gray;
+        top: 0;
+        z-index: 1;
+        font-size: 11px;
+        padding-bottom: 20px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+  .departments-table-container td {
+        font-size: 12px;
+        text-align: center;
+        margin-top: 10px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+
+     .departments-table-container tr {
+        border-bottom: #7876765d 1px solid;
+        height: 60px;
+    }
+
+    
+     .departments-table-container i {
+    cursor: pointer;
+    font-size: 14px;
+   }
+
+
+
+   /*department-modal-header*/
+
+   .department-modal-container {
+    width: 30%;
+    height: auto;
+    box-shadow: 0px 0px 10px rgba(128, 128, 128, 0.509);
+    position: fixed;
+    z-index: 1000;
+    background: #fff;
+    left: 40%;
+    margin-top: 20px;
+    border-radius: 12px;
+    padding-bottom: 20px;
+    display: none;
+}
+
+.department-modal-header {
+    padding: 20px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    font-size: 21px;
+    font-weight: 400;
+    padding-bottom: 20px;
+}
+.department-form-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.department-form-container form {
+    width: 350px;
+}
+
+.form-info {
+    display: flex;
+    flex-direction: column;  /* label on top, input below */
+    align-items: flex-start; /* label stays on the left */
+    margin-bottom: 20px;
+}
+
+.form-info label {
+    font-weight: 500;
+    font-size: 13px;
+    margin-bottom: 8px;
+    text-align: left;
+    width: 100%; /* ensures full width for alignment */
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.form-info input {
+    width: 100%;           /* full width input */
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #bbb;
+    font-size: 14px;
+    text-align: center;     /* centers the text inside the input */
+}
+
+
+.department-modalBtn {
+     width: 100%;
+    margin: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    padding-top: 10px;
+}
+
+.department-modalBtn button {
+    width: 140px;
+    height: 40px;
+    border-radius: 15px;
+    border: none;
+    font-size: 12px;
+    color: #fff;
+    background: linear-gradient(rgb(201, 71, 1), rgb(199, 70, 1));
+}

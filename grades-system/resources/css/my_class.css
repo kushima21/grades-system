@@ -43,95 +43,68 @@
         width: 100%;
         display: flex;
         align-items: center;
-        flex-wrap: wrap;
+        justify-content: left;
         gap: 20px;
-        justify-content: center;
-        padding-top: 20px;
-        padding-bottom: 20px;
+        flex-wrap: wrap;
+        padding-top: 10px;
+        padding: 10px;
     }
 
     .my-box {
-        width: 340px;
-        height: 250px;
-        box-shadow: 0px 0px  2px 0px;
+        width: 350px;
+        height: max-content;
+        padding-bottom: 10px;
+        box-shadow: 0px 0px 5px 0px gray;
         border-radius: 12px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
     }
 
-    .my-box-c {
+    .my-class-header {
         width: 100%;
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        border-bottom: 1px solid rgba(44, 44, 44, 0.159);
+        height: 110px;
+        border-bottom: 1px solid gray;
     }
 
-    .my-box-c img {
-        width: 80px;
+    .my-c {
+        padding: 20px;
+        font-size: 20px;
     }
 
-    .m-subcontainer {
-        padding-left: 5px;
-        margin: 5px;
+    .subheader {
+        padding-left: 20px;
+        font-size: 24px;
     }
 
-    .my-box-head {
-        padding-top: 10px;
-        font-size: 18px;
-        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
-    }
+    .middle-c {
+    line-height: 1.2; /* adds vertical spacing between lines */
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
 
-    .my-descriptive {
-        padding-top: 5px;
-        font-size: 25px;
-        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
-    }
+.middle-c span {
+    margin-left: 10px;
+    display: block; /* ensures each span takes its own line */
+    margin-bottom: 6px; /* adds extra spacing between lines */
+    font-size: 13px; /* optional, for better readability */
+}
 
-   .my-class-details-container {
+
+.bottom-c {
     width: 100%;
-    padding-top: 15px;
-    border-bottom: 1px solid;
-    padding-bottom: 10px;
-    }
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid gray;
+    padding-top: 40px;
+}
 
-    .my-class-details-container ul {
-        display: flex;
-        flex-wrap: wrap; /* para mag line break kung kulang space */
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        justify-content: space-between; /* left and right alignment */
-    }
+.bottom-c span {
+    font-size: 13px;
+    padding-left: 10px;
+}
 
-    .my-class-details-container li {
-        width: 48%; /* duha ka item per row */
-        margin-bottom: 8px;
-        display: flex;
-        font-size: 14px;
-        padding-left: 4px;
-    }
-
-    .my-class-details-container span {
-        padding-left: 5px;
-    }
-
-
-    .my-class-bottom {
-        width: 100%;
-        align-items: center;
-        display: flex;
-        padding: 5px;
-        padding-top: 15px;
-    }
-    .email {
-        font-size: 12px;
-        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
-    }
-    .viewBtn {
-        width: 150px;
-        height: 35px;
-        border-radius: 8px;
-        border: none;
-        background: linear-gradient(rgb(243, 65, 0), rgb(255, 74, 9));
-        font-size: 12px;
-        color: #fff;
-    }
+.bottom-c i {
+   margin-right: 20px;
+   font-size: 25px;
+   color: rgba(2, 0, 17, 0.456);
+}
