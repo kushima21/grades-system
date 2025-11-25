@@ -22,6 +22,7 @@ class Classes extends Model
         'academic_period',
         'academic_year',
         'schedule',
+        'department',
         'status',
         'added_by',
     ];

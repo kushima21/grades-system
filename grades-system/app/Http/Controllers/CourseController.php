@@ -59,4 +59,17 @@ public function update(Request $request, $id)
 
     return redirect()->route('course.index')->with('success', 'Course updated successfully!');
 }
+
+public function search(Request $request)
+{
+    $query = $request->get('query', '');
+
+    $courses = Course::where('course_no', 'LIKE', "%{$query}%")
+                ->orWhere('descriptive_title', 'LIKE', "%{$query}%")
+                ->limit(5)
+                ->get();
+
+    return response()->json($courses);
+}
+
 }

@@ -1,8 +1,25 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CourseController;
-use App\Http\Controllers\DepartmentController;
+
+use App\Http\Controllers\{
+    AuthController,
+    IndexController,
+    ForgotPasswordController,
+    UserController,
+    RegistrarController,
+    InstructorController,
+    AdminController,
+    DeanController,
+    CourseController,        // Keep only once
+    DepartmentController,
+    ClassArchiveController,
+    AllGradesController,
+    StudentsGradeController,
+    NotificationController,
+    CompleteCredentialController,
+    PDFController
+};
 
 
 Route::get('/', function () {
@@ -80,8 +97,23 @@ Route::post('/course/store', [CourseController::class, 'store'])->name('course.s
 Route::get('/courses', [CourseController::class, 'index'])->name('course.index');
 Route::delete('/course/{id}/delete', [CourseController::class, 'destroy'])->name('course.destroy');
 Route::put('/course/{id}/update', [CourseController::class, 'update'])->name('course.update');
-
+Route::get('/courses/search', [CourseController::class, 'search'])->name('courses.search');
 
 // Department Routes
 Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
 Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
+Route::get('/classes', [DepartmentController::class, 'classesPage'])->name('registrar.classes');
+
+// Users Routes 
+
+Route::get('/users', [UserController::class, 'show'])->name('user.show');
+Route::delete('/admin/users/delete', [UserController::class, 'destroy'])->name('user.destroy');
+
+// Instructor
+Route::get('/instructors/search', [UserController::class, 'searchInstructor'])->name('instructors.search');
+
+//Create Class 
+Route::middleware('auth')->group(function () {
+    Route::get('/registrar/classes', [RegistrarController::class, 'ClassesMenu'])->name('RegistrarClasses');
+    Route::post('/registrar/classes/create', [RegistrarController::class, 'CreateClass'])->name('CreateClass');
+});

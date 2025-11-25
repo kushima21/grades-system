@@ -67,6 +67,7 @@ public function CreateClass(Request $request)
         "academic_period" => "required",
         "academic_year" => "required",
         "schedule" => "required",
+        "department" => "required",
         "status" => "required",
         "added_by" => "required"
     ]);

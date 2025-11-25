@@ -29,4 +29,10 @@ class DepartmentController extends Controller
 
         return redirect()->back()->with('success', 'Department created successfully!');
     }
+
+    public function classesPage()
+{
+    $departments = Department::all();
+    return view('registrar.classes', compact('departments'));
+}
 }

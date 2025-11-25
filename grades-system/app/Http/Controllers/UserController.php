@@ -53,7 +53,7 @@ class UserController extends Controller
 
 
 
-        return view('users.user', compact('users', 'departments', 'roles', 'department'));
+        return view('admin.users', compact('users', 'departments', 'roles', 'department'));
     }
 
     public function editUser(Request $request)
@@ -115,5 +115,17 @@ class UserController extends Controller
         // Redirect back with a success message (or do whatever logic you want)
         return redirect()->route('user.show')->with('success', 'User deleted successfully!');
     }
+
+    public function searchInstructor(Request $request)
+{
+    $query = $request->get('query', '');
+
+    $instructors = User::where('role', 'like', '%instructor%')
+                        ->where('name', 'LIKE', "%{$query}%")
+                        ->limit(5)
+                        ->get();
+
+    return response()->json($instructors);
+}
 
 }
