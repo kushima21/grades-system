@@ -22,10 +22,10 @@
                         <img class="user-image" src="{{ asset('system_images/user.png') }}" alt="LOGO">
                         <div class="user">
                             <h3 class="user-header">
-                                Hondrada John Mark
+                                {{ Auth::user()->name ?? 'Registrar Name' }}
                             </h3>
                             <span class="id-s-header">
-                                ID#: 131033
+                                ID#: {{ Auth::user()->studentID ?? '000000' }}
                             </span>
                         </div>
                     </div>
@@ -33,7 +33,7 @@
                         <div class="profile-box-container">
                             <div class="modification-box">
                                 <span>Signed in as</span>
-                                <p>johnhondrada@gmail.com</p>
+                                <p>{{ Auth::user()->email ?? '@email' }}</p>
                             </div>
                             <div class="userLinks">
                                 <a href="#">
@@ -53,7 +53,7 @@
                         </div>
                     </div>
                     <div class="overview">
-                        <a href="#" class="{{ Request::is('/') ? 'active' : '' }}">
+                        <a href="{{ route('index') }}" class="{{ Request::is('/') ? 'active' : '' }}">
                             <div class="overview-box">
                                 <span>School Overview</span>
                             </div>
@@ -64,19 +64,21 @@
 
                         <div class="manage-link-container">
                         
-                        
+                        @if (Auth::check() && str_contains(Auth::user()->role, 'student'))
                             <div class="manage-links">
-                                <a href="my_grades">
+                                <a href="{{ route('my_grades') }}" class="{{ Request::is('my_grades') ? 'active' : '' }}">
                                     <span>My Grades</span>
                                 </a>
                             </div>
+                        @endif
                            
-                            
+                          @if (Auth::check() && str_contains(Auth::user()->role, 'instructor') || str_contains(Auth::user()->role, 'admin'))
                             <div class="manage-links">
-                                <a href="{{ url('/my_class') }}" class="#">
+                                <a href="{{ route('instructor.my_class') }}" class="{{ Request::is('my_class') ? 'active' : '' }}">
                                     <span>My Classes</span>
                                 </a>
                             </div>
+                         @endif
 
 
 
@@ -98,12 +100,13 @@
                                 </a>
                             </div>
 
-                         
+                          @if (Auth::check() && (Auth::user()->role === 'instructor,dean'))
                             <div class="manage-links">
                                 <a href="{{ url('/classes') }}">
                                     <span>All Classes</span>
                                 </a>
                             </div>
+                        @endif
                   
 
 
@@ -112,7 +115,7 @@
                                     <span>My Class Archived</span>
                                 </a>
                             </div>
-
+                             @if (Auth::check() && str_contains(Auth::user()->role, 'admin'))
                             <span class="manageHeader">Settings</span>
 
                             <div class="manage-links">
@@ -120,18 +123,21 @@
                                     <span>Course</span>
                                 </a>
                             </div>
-
+                            @endif
+                            @if (Auth::check() && str_contains(Auth::user()->role, 'admin'))
                             <div class="manage-links">
                                 <a href="{{ url('/departments') }}">
                                     <span>Department</span>
                                 </a>
                             </div>
-
+                             @endif
+                            @if (Auth::check() && str_contains(Auth::user()->role, 'admin'))
                             <div class="manage-links">
                                 <a href="{{ url('/users') }}">
                                     <span>Users</span>
                                 </a>
                             </div>
+                             @endif
                 
                         </div>
 

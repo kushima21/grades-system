@@ -19,7 +19,7 @@
                     <h2>Sign in to your Grading Account</h2>
                 </div>
                 <div class="login-form-container">
-                    <form method="POST" action="#">
+                    <form method="POST" action="{{ route('login.post') }}">
                         @csrf
                         <div class="form-box">
                             <label for="email">Email</label>

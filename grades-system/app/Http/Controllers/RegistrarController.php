@@ -1430,5 +1430,11 @@ public function studentGradesView($id, $academic_period)
         return back()->with('success', 'Registrar’s decision has been submitted successfully!');
     }
 
+    public function ClassesMenu()
+{
+    $departments = \App\Models\Department::all(); // fetch all departments
+    return view('registrar.classes', compact('departments'));
+}
+
 }
 
