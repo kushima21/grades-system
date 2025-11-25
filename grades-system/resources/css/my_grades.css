@@ -52,8 +52,9 @@
     }
 
     .my-grades-box {
+        padding-bottom: 10px;
         width: 350px;
-        height: 350px;
+        height: max-content;
         box-shadow: 0px 0px 5px 0px gray;
         border-radius: 12px;
         font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
@@ -89,13 +90,15 @@
 }
 
 
+
 .bottom-c {
     width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     border-top: 1px solid gray;
-    padding-top: 40px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    display: flex;
+    flex-direction: column; /* 👈 Makes items stack vertically */
+    gap: 5px; /* optional spacing between spans */
 }
 
 .bottom-c span {
@@ -103,8 +106,56 @@
     padding-left: 10px;
 }
 
-.bottom-c i {
-   margin-right: 20px;
-   font-size: 25px;
-   color: rgba(2, 0, 17, 0.456);
+.icon-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    border-top: 1px solid gray;
+    padding-top: 20px;
+}
+
+.icon-container i {
+    padding-right: 30px;
+    font-size: 22px;
+}
+
+.icon-container {
+    display: flex;
+    gap: 15px;
+}
+
+/* Tooltip wrapper */
+.icon {
+    position: relative;
+    cursor: pointer;
+    display: inline-block;
+}
+
+/* Tooltip text */
+.icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgb(65, 65, 65);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.2s ease;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+/* Show tooltip on hover */
+.icon:hover::after {
+    opacity: 1;
+}
+
+.view-icon i {
+    color: rgb(225, 54, 2);
 }

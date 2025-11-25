@@ -38,8 +38,11 @@
                 </div>
                 <div class="bottom-c">
                     <span>Instructor: John Mark Hondrada</span>
-                    <a href="#">
-                        <i class="fa-solid fa-right-from-bracket"></i> 
+                    <span>Email:johnhondrada@ckcm.edu.ph</span>
+                </div>
+               <div class="icon-container">
+                    <a href="#" class="icon view-icon" data-tooltip="View">
+                        <i class="fa-solid fa-right-from-bracket"></i>
                     </a>
                 </div>
             </div>

@@ -103,15 +103,27 @@
                     <span>Schedule: 8:00am-10:00am MTH</span>
                     <br>
                     <span>Status: Active</span>
+                    <br>
+                    <span>BSCS</span>
                 </div>
                 <div class="bottom-c">
                     <span>Instructor: John Mark Hondrada</span>
-                    <a href="#">
-                        <i class="fa-solid fa-right-from-bracket"></i> 
+                    <span>Email:johnhondrada@ckcm.edu.ph</span>
+                </div>
+               <div class="icon-container">
+                    <span class="icon edit-icon" data-tooltip="Edit">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </span>
+
+                    <span class="icon delete-icon" data-tooltip="Delete">
+                        <i class="fa-solid fa-trash"></i>
+                    </span>
+
+                    <a href="#" class="icon view-icon" data-tooltip="View">
+                        <i class="fa-solid fa-right-from-bracket"></i>
                     </a>
                 </div>
             </div>
-            
         </div>
     </div>
 <script>
