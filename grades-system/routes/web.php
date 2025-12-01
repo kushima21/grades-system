@@ -96,7 +96,6 @@ Route::get('/instructors/search', [UserController::class, 'searchInstructor'])->
 Route::get('/instructor_dashboard', [InstructorController::class, 'index'])->name('instructor');
 Route::get('/instructor_classes', [InstructorController::class, 'classes'])->name('classes');
 Route::get('/my_class', [InstructorController::class, 'index'])->name('instructor.my_class');
-Route::get('/my_class_archive', [ClassArchiveController::class, 'index'])->name('instructor.my_class_archive');
 
 
 /*

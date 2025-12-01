@@ -48,13 +48,13 @@ class ClassArchiveController extends Controller
         }
 
         if ($request->has('subject_code') && $request->subject_code != '') {
-            $query->where('subject_code', 'LIKE', '%' . $request->subject_code . '%');
+            $query->where('course_no', 'LIKE', '%' . $request->course_no . '%');
         }
 
         $records = $query->orderBy('academic_year', 'desc')
             ->orderBy('academic_period')
             ->orderBy('descriptive_title')
-            ->orderBy('subject_code')
+            ->orderBy('course_no')
             ->get();
 
         // Get unique instructors for the dropdown
@@ -71,7 +71,7 @@ class ClassArchiveController extends Controller
             ->map(function ($yearGroup) use ($termOrder) {
                 return $yearGroup->groupBy('academic_period')
                     ->map(function ($periodGroup) use ($termOrder) {
-                        return $periodGroup->groupBy('subject_code') // Subject Code should be grouped here
+                        return $periodGroup->groupBy('course_no') // Subject Code should be grouped here
                             ->map(function ($subjectGroup) use ($termOrder) {
                                 return $subjectGroup->groupBy('instructor') // Now, group by Instructor
                                     ->map(function ($instructorGroup) use ($termOrder) {
