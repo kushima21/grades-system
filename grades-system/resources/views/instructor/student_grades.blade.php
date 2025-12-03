@@ -5,15 +5,15 @@
 
 @section('content')
     <div class="grading-score-main-container">
-        <div class="span">
+         <div class="span">
             <span>Admin</span>
             <span>></span>
             <span>Manage</span>
             <span>></span>
-            <span>Grading & Score</span>
+            <span>Student Grades</span>
         </div>
         <h2 class="my-header">
-            Grading & Score
+            Student Grades
         </h2>
         <div class="search-bar">
             <form method="" action="">
@@ -26,6 +26,7 @@
                     <tr>
                         <th>Course No</th>
                         <th>Descriptive Title</th>
+                        <th>Instructor</th>
                         <th>Academic Year</th>
                         <th>Academic Period</th>
                         <th>Schedule</th>
@@ -39,19 +40,15 @@
                         <td>{{ $class->course_no }}</td>
                         <td>{{ $class->descriptive_title }}</td>
                         <td>{{ $class->instructor }}</td>
+                        <td>{{ $class->academic_year }}</td>
                         <td>{{ $class->academic_period }}</td>
                         <td>{{ $class->schedule }}</td>
 
-                        {{-- Dynamic status styling --}}
-                        <td class="status {{ strtolower($class->status) }}">
-                            {{ $class->status }}
-                        </td>
-
                         {{-- Action: View Class --}}
                         <td style="text-align:center; background-color: var(--color9b);">
-                            <a href="{{ route('instructor.grading_view', ['id' => $class->id, 'academic_period' => $class->academic_period]) }}"
-                               class="view-btn">
-                                <i class="fa-solid fa-up-right-from-square"></i> 
+                            <a href="{{ route('instructor.student&grades_view', ['id' => $class->id, 'academic_period' => $class->academic_period]) }}"
+                                 class="view-btn">
+                                <i class="fa-solid fa-up-right-from-square"></i>
                                 View Class
                             </a>
                         </td>
@@ -66,5 +63,4 @@
             </table>
         </div>
     </div>
-
 @endsection 

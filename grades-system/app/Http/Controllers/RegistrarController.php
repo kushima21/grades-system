@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\Course;
 use App\Models\RawGrade;
+use App\Models\FinalTransmutation;
 
 
 class RegistrarController extends Controller
@@ -24,21 +25,20 @@ class RegistrarController extends Controller
     {
         return view("registrar.registrar_dashboard");
     }
-    public function registrar_classes()
-    {
-        // Fetch all classes
-        $classes = Classes::orderBy('id', 'desc')->get();
+ public function registrar_classes()
+{
+    $classes = Classes::orderBy('id', 'desc')->get();
 
-        // Fetch all instructors with role 'instructor'
-        $instructors = User::where('role', 'LIKE', '%instructor%')->get();
+    $instructors = User::where('role', 'LIKE', '%instructor%')->get();
+    $classes_student = Classes_Student::all()->groupBy('classID');
+    $finalGrades = DB::table('final_grade')->get();
 
-        // Fetch all student-class relationships
-        $classes_student = Classes_Student::all()->groupBy('classID');
+    return view(
+        'registrar.classes',
+        compact('classes', 'instructors', 'classes_student', 'finalGrades')
+    );
+}
 
-        $finalGrades = DB::table('final_grade')->get();
-        
-        return view('registrar.classes', compact('classes', 'instructors', 'classes_student', 'finalGrades'));
-    }
 
 
 public function searchInstructor(Request $request)
@@ -95,6 +95,7 @@ public function CreateClass(Request $request)
     $class->academic_period = $request->academic_period;
     $class->academic_year = $request->academic_year;
     $class->schedule = $request->schedule;
+    $class->department = $request->department;
     $class->status = $request->status;
     $class->added_by = $request->added_by;
 
@@ -542,7 +543,6 @@ public function addQuizAndScore(Request $request, $class)
 
     // Get class details
     $classDetails = Classes::find($class);
-
     if (!$classDetails) {
         return redirect()->back()->with('error', 'Class not found.');
     }
@@ -551,21 +551,21 @@ public function addQuizAndScore(Request $request, $class)
     $percentage = Percentage::where('classID', $class)
         ->where('periodic_term', $periodicTerm)
         ->first();
-
     if (!$percentage) {
         return redirect()->back()->with('error', 'Percentage data not found for this class.');
     }
 
     foreach ($scores as $studentId => $fields) {
+
+        // Get student info
         $classStudent = Classes_Student::where('classID', $class)
             ->where('studentID', $studentId)
             ->first();
-
         if (!$classStudent) continue;
 
         $studentName = $classStudent->name ?? "Student ID $studentId";
 
-        // ✅ Validation checks
+        // VALIDATIONS
         if (($fields['quizzez'] ?? 0) > $percentage->quiz_total_score) {
             return redirect()->back()->with('error', "Quiz score for {$studentName} exceeds total.");
         }
@@ -579,7 +579,7 @@ public function addQuizAndScore(Request $request, $class)
             return redirect()->back()->with('error', "Exam score for {$studentName} exceeds total.");
         }
 
-        // ✅ Save/Update quizzes and scores
+        // SAVE QUIZZES AND SCORES
         QuizzesAndScores::updateOrCreate(
             [
                 'classID'       => $class,
@@ -595,58 +595,119 @@ public function addQuizAndScore(Request $request, $class)
             ]
         );
 
-        // ✅ Compute transmuted grade
-        $quizTrans = $this->getTransmutedGrade($fields['quizzez'] ?? 0, $percentage->quiz_total_score ?? 0);
-        $attTrans  = $this->getTransmutedGrade($fields['attendance_behavior'] ?? 0, $percentage->attendance_total_score ?? 0);
-        $assTrans  = $this->getTransmutedGrade($fields['assignments'] ?? 0, $percentage->assignment_total_score ?? 0);
-        $examTrans = $this->getTransmutedGrade($fields['exam'] ?? 0, $percentage->exam_total_score ?? 0);
+        // COMPUTE TRANSMUTED
+        $quizTrans = $this->getTransmutedGrade($fields['quizzez'] ?? 0, $percentage->quiz_total_score);
+        $attTrans  = $this->getTransmutedGrade($fields['attendance_behavior'] ?? 0, $percentage->attendance_total_score);
+        $assTrans  = $this->getTransmutedGrade($fields['assignments'] ?? 0, $percentage->assignment_total_score);
+        $examTrans = $this->getTransmutedGrade($fields['exam'] ?? 0, $percentage->exam_total_score);
 
-        $quizWeighted = $this->getWeightedGrade($quizTrans, $percentage->quiz_percentage ?? 0);
-        $attWeighted  = $this->getWeightedGrade($attTrans, $percentage->attendance_percentage ?? 0);
-        $assWeighted  = $this->getWeightedGrade($assTrans, $percentage->assignment_percentage ?? 0);
-        $examWeighted = $this->getWeightedGrade($examTrans, $percentage->exam_percentage ?? 0);
+        $quizWeighted = $this->getWeightedGrade($quizTrans, $percentage->quiz_percentage);
+        $attWeighted  = $this->getWeightedGrade($attTrans, $percentage->attendance_percentage);
+        $assWeighted  = $this->getWeightedGrade($assTrans, $percentage->assignment_percentage);
+        $examWeighted = $this->getWeightedGrade($examTrans, $percentage->exam_percentage);
 
         $finalTransmutedGrade = $quizWeighted + $attWeighted + $assWeighted + $examWeighted;
 
-        // ✅ Determine which column to update (Prelim, Midterm, etc.)
+        // MAP COLUMN FOR RAW VALUE
         $columnToUpdate = match (strtolower($periodicTerm)) {
             'prelim'        => 'prelim',
             'midterm'       => 'midterm_raw',
-            'semi finals'   => 'semi_finals_raw',
-            'final'         => 'final_raw',
+            'semi-finals'   => 'semi_finals_raw',
+            'finals'        => 'final_raw',
             default         => null,
         };
+        if (!$columnToUpdate) continue;
 
-        if ($columnToUpdate) {
-            RawGrade::updateOrCreate(
-                [
-                    'studentID' => $studentId,
-                    'classID'   => $class,
-                ],
-                [
-                    $columnToUpdate       => $finalTransmutedGrade,
-                    // ✅ pulled from Classes
-                    'course_no'           => $classDetails->course_no ?? null,
-                    'descriptive_title'   => $classDetails->descriptive_title ?? null,
-                    'instructor'          => $classDetails->instructor ?? null,
-                    'academic_period'     => $classDetails->academic_period ?? null,
-                    'schedule'            => $classDetails->schedule ?? null,
-                    // ✅ pulled from Classes_Student
-                    'name'                => $classStudent->name ?? null,
-                    'gender'              => $classStudent->gender ?? null,
-                    'email'               => $classStudent->email ?? null,
-                    'department'          => $classStudent->department ?? null,
-                    'updated_at'          => now(),
-                ]
-            );
-        }
+        // GET OR CREATE RAW GRADE
+        $raw = RawGrade::firstOrCreate(
+            ['studentID' => $studentId, 'classID' => $class],
+            [
+                'course_no'         => $classDetails->course_no,
+                'descriptive_title' => $classDetails->descriptive_title,
+                'instructor'        => $classDetails->instructor,
+                'academic_period'   => $classDetails->academic_period,
+                'schedule'          => $classDetails->schedule,
+                'name'              => $classStudent->name,
+                'gender'            => $classStudent->gender,
+                'email'             => $classStudent->email,
+                'department'        => $classStudent->department,
+            ]
+        );
+
+        // UPDATE CURRENT TERM RAW VALUE
+        $raw->$columnToUpdate = $finalTransmutedGrade;
+
+        // --- RECALCULATE DEPENDENT COMPUTED GRADES ---
+        $prelimRaw     = $raw->prelim ?? 0;
+        $midtermRaw    = $raw->midterm_raw ?? 0;
+        $semiRaw       = $raw->semi_finals_raw ?? 0;
+        $finalRaw      = $raw->final_raw ?? 0;
+
+        // Midterm = 0.33 prelim + 0.67 midterm_raw
+        $raw->midterm = ($prelimRaw * 0.33) + ($midtermRaw * 0.67);
+
+        // Semi-Finals = 0.33 midterm + 0.67 semi_finals_raw
+        $raw->semi_finals = ($raw->midterm * 0.33) + ($semiRaw * 0.67);
+
+        // Final = 0.33 semi-finals + 0.67 final_raw
+        $raw->final = ($raw->semi_finals * 0.33) + ($finalRaw * 0.67);
+
+        $raw->updated_at = now();
+        $raw->save();
     }
 
     return redirect()->back()->with('success', 'Scores and raw grades saved successfully.');
 }
+
+
 // CLOSE TAG: Add Quiz and Score
 
+/*student Grades view*/
+public function studentGradesView($id, $academic_period, Request $request)
+{
+    $grades = \App\Models\RawGrade::where('classID', $id)
+        ->where('academic_period', $academic_period)
+        ->get();
 
+    $initialize = $request->input('initialize', false);
+
+    if ($initialize) {
+
+        // MUST be sorted ascending by 'grades'
+        $transmutations = \App\Models\FinalTransmutation::orderBy('grades', 'asc')->get();
+
+        foreach ($grades as $g) {
+
+            $matched = null;
+
+            // Loop and find the highest transmutation whose grade_from <= student's final grade
+            foreach ($transmutations as $t) {
+                if ($g->final >= $t->grades) {
+                    $matched = $t;
+                } else {
+                    break;
+                }
+            }
+
+            if ($matched) {
+                $g->remarks = $matched->remarks;
+            } else {
+                $g->remarks = 'FAILED';
+            }
+
+            $g->save();
+        }
+    }
+
+    $class = \App\Models\Classes::find($id);
+
+    return view('instructor.student&grades_view', compact('grades', 'class', 'academic_period'));
+}
+
+
+
+
+/* close */
 // Show Grading View
 public function showGrading($id, $academic_period)
 {
@@ -716,23 +777,23 @@ public function getStudentScores($classId, $term)
         $assTrans  = $this->getTransmutedGrade($assScore, $percentage->assignment_total_score ?? 0);
         $examTrans = $this->getTransmutedGrade($examScore, $percentage->exam_total_score ?? 0);
 
-        $scores[$student->studentID] = [
-            'quizzez'                   => $quizScore,
-            'quizzez_transmuted'        => $quizTrans,
-            'quizzez_weighted'          => $this->getWeightedGrade($quizTrans, $percentage->quiz_percentage ?? 0),
+    $scores[$student->studentID] = [
+    'quizzez'                   => $quizScore,
+    'quizzez_transmuted'        => $quizTrans ?: 5.00,
+    'quizzez_weighted'          => $quizTrans > 0 ? $this->getWeightedGrade($quizTrans, $percentage->quiz_percentage ?? 0) : 0.50,
 
-            'attendance_behavior'       => $attScore,
-            'attendance_behavior_transmuted' => $attTrans,
-            'attendance_behavior_weighted'   => $this->getWeightedGrade($attTrans, $percentage->attendance_percentage ?? 0),
+    'attendance_behavior'       => $attScore,
+    'attendance_behavior_transmuted' => $attTrans ?: 5.00,
+    'attendance_behavior_weighted'   => $attTrans > 0 ? $this->getWeightedGrade($attTrans, $percentage->attendance_percentage ?? 0) : 0.50,
 
-            'assignments'               => $assScore,
-            'assignments_transmuted'    => $assTrans,
-            'assignments_weighted'      => $this->getWeightedGrade($assTrans, $percentage->assignment_percentage ?? 0),
+    'assignments'               => $assScore,
+    'assignments_transmuted'    => $assTrans ?: 5.00,
+    'assignments_weighted'      => $assTrans > 0 ? $this->getWeightedGrade($assTrans, $percentage->assignment_percentage ?? 0) : 0.50,
 
-            'exam'                      => $examScore,
-            'exam_transmuted'           => $examTrans,
-            'exam_weighted'             => $this->getWeightedGrade($examTrans, $percentage->exam_percentage ?? 0),
-        ];
+    'exam'                      => $examScore,
+    'exam_transmuted'           => $examTrans ?: 5.00,
+    'exam_weighted'             => $examTrans > 0 ? $this->getWeightedGrade($examTrans, $percentage->exam_percentage ?? 0) : 0.50,
+];
     }
 
     return response()->json($scores);
@@ -747,137 +808,151 @@ private function getTransmutedGrade($fieldScore, $totalScore)
             ->where('score', '<=', $fieldScore)
             ->orderBy('score', 'desc')
             ->first();
-        return $entry?->transmuted_grade ?? 0;
+        $trans = $entry?->transmuted_grade ?? 0;
+        return $trans > 0 ? $trans : 5.00; // default 5.00 if transmuted = 0
     }
-    return 0;
-}   
+    return 5.00; // default 5.00 if no score
+}
 
 private function getWeightedGrade($transmutedGrade, $percentage)
 {
+    if ($transmutedGrade == 0) return 0.50; // special rule
     return (!is_null($transmutedGrade) && $percentage > 0)
         ? ($transmutedGrade * $percentage) / 100
         : 0;
 }
 
 
-
-
-/*student Grades view*/
-
-public function studentGradesView($id, $academic_period)
+public function initializeGrades(Request $request)
 {
-    // Fetch all raw grades for this class and academic period
-    $grades = \App\Models\RawGrade::where('classID', $id)
-        ->where('academic_period', $academic_period)
-        ->get();
+    $grades = $request->grades;
 
-    // Get class info (optional)
-    $class = \App\Models\Classes::find($id);
+    if (empty($grades) || !is_array($grades)) {
+        return back()->with('error', 'No students yet, you can\'t initialize.');
+    }
 
-    return view('instructor.student&grades_view', compact('grades', 'class', 'academic_period'));
+    // Get all transmutations sorted ascending by 'grades'
+    $transmutations = FinalTransmutation::orderBy('grades', 'asc')->get();
+
+    foreach ($grades as $grade) {
+
+        // Make sure $grade is array, not string
+        if (!is_array($grade)) continue;
+
+        $classInfo   = Classes::find($grade['classID']);
+        $studentInfo = Classes_Student::where('studentID', $grade['studentID'])->first();
+
+        $finalGrade = floatval($grade['final'] ?? 0); // cast to float for numeric comparison
+
+        // Step 1: Try to match using 'grades'
+        $matched = $transmutations->filter(fn($t) => $finalGrade >= floatval($t->grades))->last();
+
+        // Step 2: If no match on 'grades', try 'transmutation'
+        if (!$matched) {
+            $matched = $transmutations->filter(fn($t) => $finalGrade >= floatval($t->transmutation))->last();
+        }
+
+        // Default remarks if still not matched
+        $remarks = $matched ? $matched->remarks : 'Failed';
+
+        // Update raw_grades table
+        DB::table('raw_grades')
+            ->where('classID', $grade['classID'])
+            ->where('studentID', $grade['studentID'])
+            ->update([
+                'remarks' => $remarks
+            ]);
+
+        // Insert or update final_grade table
+        DB::table('final_grade')->updateOrInsert(
+            [
+                'classID'   => $grade['classID'],
+                'studentID' => $grade['studentID']
+            ],
+            [
+                'course_no'         => optional($classInfo)->course_no,
+                'descriptive_title' => optional($classInfo)->descriptive_title,
+                'instructor'        => optional($classInfo)->instructor,
+                'academic_period'   => optional($classInfo)->academic_period,
+                'schedule'          => optional($classInfo)->schedule,
+
+                'name'       => optional($studentInfo)->name,
+                'gender'     => optional($studentInfo)->gender,
+                'email'      => optional($studentInfo)->email,
+                'department' => optional($studentInfo)->department,
+
+                'prelim'      => $grade['prelim'] ?? null,
+                'midterm'     => $grade['midterm'] ?? null,
+                'semi_finals' => $grade['semi_finals'] ?? null,
+                'final'       => $grade['final'] ?? null,
+
+                'remarks'    => $remarks,
+                'status'     => '',
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
+    }
+
+    return back()->with('success', 'Grades have been initialized successfully!');
 }
 
 
-/* close */
 
 
 
-
-
-
-
-    public function initializeGrades(Request $request)
-    {
-        // Check if the grades are empty or null
-        if (empty($request->grades)) {
-            return back()->with('error', 'No students yet, you can\'t initialize.');
-        }
-
-        foreach ($request->grades as $grade) {
-            $classInfo = Classes::find($grade['classID']); // Get class info
-
-            // Fetch student info correctly
-            $studentInfo = Classes_Student::where('studentID', $grade['studentID'])->first();
-
-            // Initialize all grades with "Initialized" status
-            DB::table('final_grade')->updateOrInsert(
-                [
-                    'classID' => $grade['classID'],
-                    'studentID' => $grade['studentID']
-                ],
-                [
-                    'course_no' => optional($classInfo)->course_no,
-                    'descriptive_title' => optional($classInfo)->descriptive_title,
-                    'instructor' => optional($classInfo)->instructor,
-                    'academic_period' => optional($classInfo)->academic_period,
-                    'schedule' => optional($classInfo)->schedule,
-                    'name' => optional($studentInfo)->name,
-                    'gender' => optional($studentInfo)->gender,
-                    'email' => optional($studentInfo)->email,
-                    'department' => optional($studentInfo)->department,
-                    'prelim' => $grade['prelim'],
-                    'midterm' => $grade['midterm'],
-                    'semi_finals' => $grade['semi_finals'],
-                    'final' => $grade['final'],
-                    'remarks' => $grade['remarks'],
-                    'status' => '', // ✅ Setting initial status here
-                    'updated_at' => now(),
-                    'created_at' => now(),
-                ]
-            );
-        }
-
-        return back()->with('success', 'Grades have been initialized successfully!');
+public function lockInGrades(Request $request)
+{
+    $grades = $request->grades;
+    if (empty($grades)) {
+        return back()->with('error', 'No students yet, you can\'t lock.');
     }
 
+    $classID = $request->classID;
+    $department = $request->department;
 
-    public function lockInGrades(Request $request)
-    {
-        // Check if the grades are empty or null
-        if (empty($request->grades)) {
-            return back()->with('error', 'No students yet, you can\'t lock.');
-        }
+    $classInfo = Classes::find($classID);
 
-        foreach ($request->grades as $grade) {
-            $classInfo = Classes::find($grade['classID']); // Get class info
+    foreach ($grades as $g) {
+        $studentID = $g['studentID'];
+        $studentInfo = Classes_Student::where('studentID', $studentID)->first();
 
-            // Fetch student info correctly
-            $studentInfo = Classes_Student::where('studentID', $grade['studentID'])->first();
+        DB::table('final_grade')->updateOrInsert(
+            [
+                'classID' => $classID,
+                'studentID' => $studentID
+            ],
+            [
+                'course_no' => optional($classInfo)->course_no,
+                'descriptive_title' => optional($classInfo)->descriptive_title,
+                'instructor' => optional($classInfo)->instructor,
+                'academic_period' => optional($classInfo)->academic_period,
+                'schedule' => optional($classInfo)->schedule,
 
-            // Update or insert the active grade record
-            DB::table('final_grade')->updateOrInsert(
-                [
-                    'classID' => $grade['classID'],
-                    'studentID' => $grade['studentID']
-                ],
-                [
-                    'course_no' => optional($classInfo)->course_no,
-                    'descriptive_title' => optional($classInfo)->descriptive_title,
-                    'instructor' => optional($classInfo)->instructor,
-                    'academic_period' => optional($classInfo)->academic_period,
-                    'schedule' => optional($classInfo)->schedule,
-                    'name' => optional($studentInfo)->name,
-                    'gender' => optional($studentInfo)->gender,
-                    'email' => optional($studentInfo)->email,
-                    'department' => optional($studentInfo)->department,
-                    'prelim' => $grade['prelim'],
-                    'midterm' => $grade['midterm'],
-                    'semi_finals' => $grade['semi_finals'],
-                    'final' => $grade['final'],
-                    'remarks' => $grade['remarks'],
-                    'status' => 'Locked', // Add status field here
-                    'updated_at' => now(),
-                    'created_at' => now(),
-                ]
-            );
+                'name' => optional($studentInfo)->name,
+                'gender' => optional($studentInfo)->gender,
+                'email' => optional($studentInfo)->email,
+                'department' => optional($studentInfo)->department,
 
-            $classIDs[] = $grade['classID'];
-        }
+                'prelim' => $g['prelim'],
+                'midterm' => $g['midterm'],
+                'semi_finals' => $g['semi_finals'],
+                'final' => $g['final'],
+                'remarks' => $g['remarks'],
 
-        Classes::whereIn('id', $classIDs)->update(['status' => 'Locked']);
-
-        return back()->with('success', 'Final grades have been locked successfully!');
+                'status' => 'Locked',
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
     }
+
+    return back()->with('success', 'Final grades for ' . $department . ' have been locked successfully!');
+}
+
+
+
+
 
     public function UnlockGrades(Request $request)
     {

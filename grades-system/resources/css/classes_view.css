@@ -248,3 +248,38 @@
 }
 
     /*close */
+
+
+    .student-wrapper {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .student-table-container {
+         width: 100%;
+        border-collapse: collapse;
+    }
+
+
+    
+    .student-table-container th {
+        color: gray;
+        top: 0;
+        z-index: 1;
+        font-size: 11px;
+        padding-bottom: 20px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.student-table-container  td {
+        font-size: 12px;
+        text-align: center;
+        margin-top: 10px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+    .student-table-container tr {
+        border-bottom: #7876765d 1px solid;
+        height: 50px;
+    }

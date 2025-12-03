@@ -79,3 +79,173 @@
         border-radius: 12px;
         background: linear-gradient(#0e0d0d69, #0e0d0d69);
     }
+
+    /* student grades view */
+.student-grades-finals-container {
+    width: 100%;
+    overflow: auto;
+    height: 100%;
+}
+
+.student-main-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.student-grades-head {
+    font-size: 25px;
+    padding-bottom: 10px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+.student-grades-sub-header {
+    padding-top: 20px;
+    padding-left: 13px;
+    font-size: 20px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.student-grades-m-container {
+    width: 100%;
+}
+
+.s-header-top {
+    width: 100%;
+    display: flex;
+    justify-content: right;
+    align-items: center;
+}
+.student-department-h {
+    font-size: 14px;
+    padding-top: 40px;
+    padding-left: 20px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.show-rawBtn {
+    margin-right: 20px;
+    height: 38px;
+    width: 150px;
+    border-radius: 10px;
+    background: linear-gradient(orangered, rgb(215, 57, 0));
+    color: white;
+    font-size: 11.20px; 
+    border: none;
+}
+
+.status-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    padding-left: 10px;
+}
+
+.status-span {
+    margin: 10px;
+    font-size: 13px;
+    color: gray;
+}
+
+.student-grades-wrapper {
+      flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+}
+
+.student-grades-table-container {
+      width: 100%;
+    border-collapse: collapse;
+}
+
+.student-grades-table-container th {
+        color: gray;
+        top: 0;
+        z-index: 1;
+        font-size: 12px;
+        padding-bottom: 20px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+    
+.student-grades-table-container td {
+        font-size: 12px;
+        text-align: center;
+        margin-top: 10px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+
+    .student-grades-table-container tr {
+        border-bottom: #7876765d 1px solid;
+        height: 50px;
+    }
+
+       .raw-col {
+        display: none; /* Hide raw columns by default */
+    }
+
+    .show-raw .raw-col {
+        display: table-cell; /* Show raw columns when toggled */
+    }
+
+    .show-rawBtn {
+        padding: 8px 16px;
+        background-color: #007bff;
+        border: none;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .show-rawBtn:hover {
+        background-color: #0056b3;
+    }
+
+    .gradeBTn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+    }
+
+    .gradeBTn button {
+        margin: 15px;
+        width: max-content;
+        padding-left: 20px;
+        padding-right: 20px;
+        height: 37px;
+        border-radius: 8px;
+        font-size: 13px;
+        background: #fff;
+        color: #060606;
+        border: 1px solid rgb(246, 66, 0);
+        font-weight: 400;
+    }
+
+    .initialBtn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        padding-left: 20px;
+    }
+
+    .initialyzeBtn {
+        margin-left: 15px;
+        width: 180px;
+        height: 30px;
+        border-radius: 7px;
+        border: 1px solid rgb(0, 100, 7);
+        color: orangered;
+        background: #fff;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .in-class {
+        padding-left: 35px;
+        padding-top: 10px;
+        font-size: 12px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }

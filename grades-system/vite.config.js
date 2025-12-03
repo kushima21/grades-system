@@ -17,6 +17,7 @@ export default defineConfig({
             input: ['resources/css/my_class_archive.css', 'resources/js/app.js'],
             input: ['resources/css/user.css', 'resources/js/app.js'],
             input: ['resources/css/departments.css', 'resources/js/app.js'],
+            input: ['resources/css/grading_view', 'resources/js/app.js'],
             refresh: true,
         }),
         tailwindcss(),

@@ -89,13 +89,13 @@
                             </div>
 
                             <div class="manage-links">
-                                <a href="#">
+                                <a href="{{ route('instructor.grading&score') }}">
                                     <span>Grading & Scores</span>
                                 </a>
                             </div>
 
                             <div class="manage-links">
-                                <a href="#">
+                                <a href="{{  route('instructor.student_grades')  }}">
                                     <span>Student Grades</span>
                                 </a>
                             </div>

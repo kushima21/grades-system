@@ -18,16 +18,16 @@
     </div>
 
     <!-- Class Info -->
-    <h2 class="my-header">CS-10</h2>
-    <span class="class-header">Programming 1</span>
+    <h2 class="my-header">{{ $classes->course_no}}</h2>
+    <span class="class-header">{{ $classes->descriptive_title}}</span>
 
     <div class="cv-subheader">
-        <p class="cv-h">Academic Year: 2025-2026</p>
-        <p class="cv-h">Academic Period: First Semester</p>
+        <p class="cv-h">Academic Year: {{ $classes->academic_year}}</p>
+        <p class="cv-h">Academic Period: {{ $classes->academic_period}}</p>
     </div>
     <div class="cv-subheader">
-        <p class="cv-h">Instructor: John Mark Hondrada</p>
-        <p class="cv-h">Schedule: 10:00am - 12:00pm Monday/Tuesday/Wednesday</p>
+        <p class="cv-h">Instructor: {{ $classes->instructor}}</p>
+        <p class="cv-h">Schedule: {{ $classes->schedule}}</p>
     </div>
 
     <!-- ADD STUDENT MODAL -->
@@ -49,7 +49,7 @@
 
         <!-- Manual Add Form -->
         <div class="class-view-form-container">
-            <form method="POST" action="">
+            <form method="POST" action="{{ route('class.addstudent', $class) }}">
                 @csrf
                 <div class="info-add">
                     <label for="studentSearch">Find Student</label>
@@ -114,6 +114,30 @@
                 <i class="fa-solid fa-plus fa-stack-1x plus-icon"></i>
             </span>
         </div>
+        <div class="student-wrapper">
+            <table class="student-table-container">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                    </tr>
+                </thead>
+                 @foreach ($classes_student as $classes_students)
+                <tbody>
+                    <tr>
+                        <td>{{ $classes_students->studentID }}</td>
+                        <td>{{ $classes_students->name }}</td>
+                        <td>{{ $classes_students->gender }}</td>
+                        <td>{{ $classes_students->email }}</td>
+                        <td>{{ $classes_students->department }}</td>
+                    </tr>
+                </tbody>
+                @endforeach
+            </table>
+        </div>
     </div>
 </div>
 
@@ -126,5 +150,80 @@ function openAddStudentModal() {
 function closeAddStudentModal() {
     document.getElementById('addStudentModal').classList.remove('show');
 }
+</script>
+  <script>
+        // ✅ Students data from Laravel
+    let students = {!! json_encode($students) !!};
+
+    function filterStudents() {
+        const input = document.getElementById("studentSearch").value.toLowerCase();
+        const dropdown = document.getElementById("studentDropdown");
+        dropdown.innerHTML = ""; // Clear previous results
+
+        if (input.trim() === "") {
+            dropdown.classList.remove("show");
+            return;
+        }
+
+        let filtered = students.filter(student =>
+            student.name.toLowerCase().includes(input) ||
+            student.email.toLowerCase().includes(input) ||
+            student.studentID.toString().includes(input) ||
+            student.department.toLowerCase().includes(input)
+        );
+
+        if (filtered.length === 0) {
+            dropdown.classList.remove("show");
+            return;
+        }
+
+        filtered.forEach(student => {
+            let option = document.createElement("div");
+            option.textContent = `${student.studentID} - ${student.name} (${student.department})`;
+            option.onclick = function () {
+                document.getElementById("studentSearch").value = student.name;
+                document.getElementById("student_id").value = student.studentID;
+                document.getElementById("name").value = student.name;
+                document.getElementById("gender").value = student.gender;
+                document.getElementById("email").value = student.email;
+                document.getElementById("department").value = student.department;
+                dropdown.classList.remove("show");
+            };
+            dropdown.appendChild(option);
+        });
+
+        dropdown.classList.add("show");
+    }
+
+    // Hide dropdown when clicking outside
+    document.addEventListener("click", function (e) {
+        const input = document.getElementById("studentSearch");
+        const dropdown = document.getElementById("studentDropdown");
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove("show");
+        }
+    });
+    </script>
+<script>
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.student-checkbox');
+    const bulkDeleteContainer = document.getElementById('bulkDeleteContainer');
+
+    // Function to check if any checkbox is selected
+    function toggleBulkDeleteButton() {
+        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+        bulkDeleteContainer.style.display = anyChecked ? 'block' : 'none';
+    }
+
+    // ✅ Toggle all checkboxes when Select All is clicked
+    selectAll.addEventListener('change', function () {
+        checkboxes.forEach(cb => cb.checked = this.checked);
+        toggleBulkDeleteButton();
+    });
+
+    // ✅ Listen to each checkbox change
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', toggleBulkDeleteButton);
+    });
 </script>
 @endsection

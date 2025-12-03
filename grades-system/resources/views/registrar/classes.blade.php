@@ -24,12 +24,12 @@
                 Create New Class
             </h2>
             <div class="classes-form-container">
-               <form method="POST" action="{{ route('CreateClass') }}">
+               <form method="POST" action="{{ route('classes.create') }}">
                 @csrf
                     <div class="class-wrapper-container">
                        <div class="classes-info">
                             <label for="course_no">Course No: <em>*Example: GEC 001*</em></label>
-                            <input type="text" id="courseInput" placeholder="Search for Course No...">
+                            <input type="text" name="course_no" id="courseInput" placeholder="Search for Course No...">
                             <!-- Dropdown for auto-complete -->
                             <div id="courseDropdown" style="border:1px solid #ccc; max-height:150px; overflow-y:auto; display:none; position:absolute; background:white; z-index:1000;"></div>
                         </div>
@@ -41,7 +41,7 @@
                         </div>
                        <div class="classes-info">
                             <label for="descriptive_title">Descriptive Title:</label>
-                            <input type="text" id="descriptiveTitle" readonly>
+                            <input type="text" name="descriptive_title" id="descriptiveTitle" readonly>
                         </div>
                         <div class="classes-info">
                             <label for="academic_year">Academic Year:</label>
@@ -56,7 +56,7 @@
                         </div>
                         <div class="classes-info">
                             <label for="units">Units:</label>
-                            <input type="text" id="units" readonly>
+                            <input type="text" name="units" id="units" readonly>
                         </div>
                         <div class="classes-info">
                             <label for="academic_period">Academic Period:</label>
@@ -70,7 +70,7 @@
                         </div>
                         <div class="classes-info">
                             <label for="schedule">Schedule: <em>*Example: Monday, Tuesday, Wednesday*</em></label>
-                            <input type="text" placeholder="Enter Schedule Class...">
+                            <input type="text" name="schedule" placeholder="Enter Schedule Class...">
                         </div>
                         
                         <div class="classes-info">
@@ -79,26 +79,20 @@
                             </label>
 
                             <!-- Display selected departments -->
-                            <div id="selectedDepartmentsContainer" 
-                                style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:5px;"></div>
+                            <input type="text" name="department" id="department" placeholder="Enter Departments" required>
+                        </div>
+                         <input type="hidden" name="added_by" value="{{ Auth::user()->name ?? 'Test User' }}">
 
-                            <!-- Hidden input to submit selected departments -->
-                            <input type="hidden" id="departmentHiddenInput" name="department">
-
-                            <!-- Select dropdown -->
-                            <select id="departmentSelect">
-                                <option value="">Select Department</option>
-                                @foreach ($departments as $dept)
-                                    <option value="{{ $dept->department_code }}">
-                                        {{ $dept->department_code }}
-                                    </option>
-                                @endforeach
+                       <div class="classes-info" style="display:none;">
+                            <label for="status">Status:</label>
+                            <select name="status" id="status" required>
+                                <option value="Active" selected>Active</option>
+                                <option value="Inactive">Inactive</option>
                             </select>
                         </div>
 
-
                         <div class="classes-btn">
-                            <button type="submit" name="submit">Create</button>
+                            <button type="submit">Create</button>
                             <button type="button" id="closeModalBtn">Close</button>
                         </div>
                     </div>
@@ -116,26 +110,30 @@
                 <i class="fa-solid fa-plus fa-stack-1x plus-icon"></i>
                 </span>
             </div>
+            @foreach ($classes as $class)
             <div class="classes-box">
                 <div class="classes-header">
-                    <h3 class="my-c">CS-10</h3>
-                    <h3 class="subheader">Programming 1</h3>
+                    <h3 class="my-c">{{ $class->course_no }}</h3>
+                    <h3 class="subheader">{{ $class->descriptive_title }}</h3>
                 </div>
+
                 <div class="middle-c">
-                    <span>School Year: 2025-2026</span>
+                    <span>School Year: {{ $class->academic_year }}</span>
                     <br>
-                    <span>School Period: 1st Semester</span>
+                    <span>School Period: {{ $class->academic_period }}</span>
                     <br>
-                    <span>Schedule: 8:00am-10:00am MTH</span>
+                    <span>Schedule: {{ $class->schedule }}</span>
                     <br>
-                    <span>Status: Active</span>
+                    <span>Status: {{ $class->status }}</span>
                     <br>
-                    <span>BSCS</span>
+                    <span>{{ $class->department }}</span>
                 </div>
+
                 <div class="bottom-c">
-                    <span>Instructor: John Mark Hondrada</span>
+                    <span>Instructor: {{ $class->instructor }}</span>
                 </div>
-               <div class="icon-container">
+
+                <div class="icon-container">
                     <span class="icon edit-icon" data-tooltip="Edit">
                         <i class="fa-solid fa-pen-to-square"></i>
                     </span>
@@ -144,11 +142,13 @@
                         <i class="fa-solid fa-trash"></i>
                     </span>
 
-                    <a href="#" class="icon view-icon" data-tooltip="View">
+                    <a href="{{ route('class.show', $class->id) }}" class="icon view-icon" data-tooltip="View">
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </a>
                 </div>
             </div>
+            @endforeach
+
         </div>
     </div>
 <script>

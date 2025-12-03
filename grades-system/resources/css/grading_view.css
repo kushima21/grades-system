@@ -1,0 +1,432 @@
+.grading-view-main-container {
+    width: 100%;
+    height: 100%;
+}
+
+.span {
+        display: flex;
+        align-items: center;
+    }
+
+    .span span {
+        margin: 10px;
+        font-size: 14px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        color: #0e0d0d69;
+    }
+
+    .my-header {
+        padding: 10px;
+        font-size: 25px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+
+    
+
+    /*c-table-main-container */
+    .c-table-main-container {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .c-table-list-container {
+        width: 100%;
+        bordecr-collapse: collapse; /* para compact ang borders */
+        margin-top: 8%;
+    }
+
+    .c-table-list-container th, 
+    .c-table-list-container td  {
+        padding: 10px;
+        text-align: left;
+    }
+
+    .c-table-list-container tr {
+        height: 50px;
+        font-size: 11px;
+    }
+
+
+    .grading-tab {
+        margin-top: 10px;
+        margin: 15px;
+        width: 100px;
+        height: 30px;
+        border-radius: 7px;
+        border: none;
+        background: gray;  /* inactive background */
+        font-size: 11px;
+        color: white;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .grading-tab.active {
+        background: linear-gradient(orangered, rgb(215, 57, 0));
+    }
+
+    .grading-h {
+        font-size: 18px;
+        padding-left: 15px;
+        padding-top: 10px;
+    }
+
+    .border-grading-form {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .table-grading-form-box {
+        width: 95%;
+        height: auto;
+        margin-bottom: 2%;
+        margin-top: 2%;
+        border-radius: 7px;
+        padding: 15px;
+    }
+
+    .grading-setup {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+    }
+
+    .grading-item {
+        width: 23%;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .grading-item h4 {
+        margin-bottom: 5px;
+        font-size: 10px;
+    }
+
+    .grading-item input {
+        width: 100%;
+        padding: 6px;
+        margin-bottom: 8px;
+        border-radius: 3px;
+    }
+
+    .note {
+        color: #c0392b;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    .grading-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    .grading-table th, .grading-table td {
+        text-align: center;
+        padding: 6px;
+        font-size: 13px;
+    }
+
+    .grading-table input {
+        width: 80px;
+        padding: 3px;
+        text-align: center;
+    }
+
+    .border-grading-form {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .table-grading-form-box {
+        width: 100%;
+        height: auto;
+        box-shadow: 0px 0px 5px;
+        margin-bottom: 2%;
+        margin-top: 2%;
+        border-radius: 7px;
+        padding: 15px;
+    }
+
+    .grading-setup {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .grading-item {
+        width: 23%;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .grading-item h4 {
+        margin-bottom: 5px;
+        font-size: 10px;
+    }
+
+    .grading-item label {
+        font-size: 10px;
+    }
+
+    .grading-item input {
+        width: 100%;
+        padding: 5px;
+        margin-bottom: 8px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        margin-top: 10px;
+    }
+
+    .save-btn {
+        background: linear-gradient(orangered, rgb(215, 57, 0));
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        margin-top: 10px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 11px;
+        height: 30px;
+        margin: 5px;
+    }
+
+    .save-btn:hover {
+        background: linear-gradient(rgb(255, 76, 11), rgb(183, 51, 3));
+
+    }
+
+    .note {
+        color: #c0392b;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+
+    .student-list {
+        font-size: 18px;
+        padding-left: 15px;
+        padding-top: 10px;
+    }
+
+    .border-student-list {
+        width: 100%;
+    }
+
+
+    .search-student {
+        width: 250px;
+        height: 30px;
+        padding: 15px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        font-size: 11px;
+        margin-top: 10px;
+    }
+
+  .table-student-form-list {
+    width: 100%;
+    height: auto;
+    margin-bottom: 2%;
+    margin-top: 2%;
+}
+
+.student-item {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+
+.student-item th, 
+.student-item td {
+    font-size: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    height: 60px;
+}
+
+
+
+
+.input-box {
+    width: 85px;
+    height: 30px;
+    border-radius: 3px;
+    border: none;
+    box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.3);
+    padding-left: 3px;
+}
+
+.readonly-box {
+    width:  90px;
+    height: 25px;
+    border-radius: 3px;
+    display: flex;
+    justify-content: center;
+}
+
+
+.student-listBtn {
+    margin-bottom: 20px;
+}
+
+.student-listBtn button {
+    background: linear-gradient(orangered, rgb(215, 57, 0));
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    margin-top: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 11px;
+    height: 30px;
+    margin: 5px;
+}
+
+
+/* student grades view */
+.student-grades-finals-container {
+    width: 100%;
+    overflow: auto;
+    height: 100%;
+}
+
+.student-main-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.student-grades-head {
+    padding-top: 10px;
+    font-size: 22px;
+    padding-bottom: 10px;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+.student-grades-sub-header {
+    margin-top: 8%;
+    padding-left: 13px;
+    font-size: 14px;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+.student-grades-m-container {
+    width: 100%;
+}
+
+.s-header-top {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.student-department-h {
+    font-size: 14px;
+    padding-top: 25px;
+    padding-left: 20px;
+}
+
+.show-rawBtn {
+    margin-right: 20px;
+    height: 38px;
+    width: 150px;
+    border-radius: 10px;
+    background: linear-gradient(orangered, rgb(215, 57, 0));
+    color: white;
+    font-size: 11.20px; 
+    border: none;
+}
+
+.status-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    padding-left: 10px;
+}
+
+.status-span {
+    margin: 10px;
+    font-size: 13px;
+    color: gray;
+}
+
+.student-grades-wrapper {
+      flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+}
+
+.student-grades-table-container {
+      width: 100%;
+    border-collapse: collapse;
+}
+
+.student-grades-table-container th {
+        color: gray;
+        top: 0;
+        z-index: 1;
+        font-size: 12px;
+        padding-bottom: 20px;
+    }
+
+    
+.student-grades-table-container td {
+        font-size: 12px;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+
+    .student-grades-table-container tr {
+        border-bottom: #7876765d 1px solid;
+        height: 50px;
+    }
+
+       .raw-col {
+        display: none; /* Hide raw columns by default */
+    }
+
+    .show-raw .raw-col {
+        display: table-cell; /* Show raw columns when toggled */
+    }
+
+    .show-rawBtn {
+        padding: 8px 16px;
+        background-color: #007bff;
+        border: none;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .show-rawBtn:hover {
+        background-color: #0056b3;
+    }
+
+    .gradeBTn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: right;
+    }
+
+    .gradeBTn button {
+        margin: 15px;
+        width: 120px;
+        height: 37px;
+        border-radius: 12px;
+        border: none;
+        font-size: 11px;
+        background: linear-gradient(orangered, rgb(164, 45, 1));
+        color: #fff;
+    }

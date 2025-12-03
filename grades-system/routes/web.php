@@ -24,40 +24,45 @@ use App\Http\Controllers\{
 
 /*
 |--------------------------------------------------------------------------
-| STATIC VIEWS
+| STATIC VIEW ROUTES
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', fn () => view('welcome'));
-Route::get('/dashboard', fn () => view('admin.dashboard'));
-Route::get('/default', fn () => view('layouts.default'));
-Route::get('/course', fn () => view('admin.course'));
+Route::view('/', 'welcome');
+Route::view('/dashboard', 'admin.dashboard');
+Route::view('/default', 'layouts.default');
+Route::view('/course', 'admin.course');
 
-// Instructor views
-Route::get('/my_grades', fn () => view('instructor.my_grades'));
-Route::get('/my_class', fn () => view('instructor.my_class'));
-Route::get('/grading&score', fn () => view('instructor.grading&score'));
 
-// Registrar views
-Route::get('/my_class_archive', fn () => view('registrar.my_class_archive'));
-Route::get('/classes_view', fn () => view('registrar.classes_view'));
+Route::view('/grading&score', 'instructor.grading&score');
+Route::view('/grading_view', 'instructor.grading_view');
+Route::view('/student_grades', 'instructor.student_grades');
+Route::view('/student&grades_view', 'instructor.student&grades_view');
 
-// Users view
-Route::get('/users', fn () => view('admin.users'));
+// Instructor static views
+Route::view('/my_grades', 'instructor.my_grades');
+Route::view('/my_class', 'instructor.my_class');
+Route::get('/classes', fn () => view('registrar.classes'));
 
-// Departments view
-Route::get('/departments', fn () => view('admin.departments'));
+// Registrar static views
+Route::view('/my_class_archive', 'registrar.my_class_archive');
+Route::view('/classes_view', 'registrar.classes_view');
 
-// Login view
-Route::get('/login', fn () => view('auth.login'));
+// Users
+Route::view('/users', 'admin.users');
+
+// Departments
+Route::view('/departments', 'admin.departments');
+
+// Login fallback view
+Route::view('/login', 'auth.login');
 
 
 /*
 |--------------------------------------------------------------------------
-| COURSE ROUTES
+| COURSE MODULE ROUTES
 |--------------------------------------------------------------------------
 */
-
 Route::post('/course/store', [CourseController::class, 'store'])->name('course.store');
 Route::get('/courses', [CourseController::class, 'index'])->name('course.index');
 Route::delete('/course/{id}/delete', [CourseController::class, 'destroy'])->name('course.destroy');
@@ -70,10 +75,8 @@ Route::get('/courses/search', [CourseController::class, 'search'])->name('course
 | DEPARTMENT ROUTES
 |--------------------------------------------------------------------------
 */
-
 Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
 Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
-Route::get('/classes', [DepartmentController::class, 'classesPage'])->name('registrar.classes');
 
 
 /*
@@ -81,7 +84,6 @@ Route::get('/classes', [DepartmentController::class, 'classesPage'])->name('regi
 | USER ROUTES
 |--------------------------------------------------------------------------
 */
-
 Route::get('/users', [UserController::class, 'show'])->name('user.show');
 Route::delete('/admin/users/delete', [UserController::class, 'destroy'])->name('user.destroy');
 Route::get('/instructors/search', [UserController::class, 'searchInstructor'])->name('instructors.search');
@@ -92,18 +94,36 @@ Route::get('/instructors/search', [UserController::class, 'searchInstructor'])->
 | INSTRUCTOR ROUTES
 |--------------------------------------------------------------------------
 */
-
 Route::get('/instructor_dashboard', [InstructorController::class, 'index'])->name('instructor');
 Route::get('/instructor_classes', [InstructorController::class, 'classes'])->name('classes');
 Route::get('/my_class', [InstructorController::class, 'index'])->name('instructor.my_class');
 
+    Route::get('/instructor_dashboard', [InstructorController::class, 'index'])->name('instructor');
+    Route::get('/instructor_classes', [InstructorController::class, 'classes'])->name('classes');
+    Route::get('/my_class', [InstructorController::class, 'index'])->name('instructor.my_class');
+    Route::get('/my_class_archive', [ClassArchiveController::class, 'index'])->name('instructor.my_class_archive');
+    Route::get('/grading&score', [InstructorController::class, 'grading'])->name('instructor.grading&score');
+    Route::get('/student_grades', [InstructorController::class, 'studentGrades'])->name('instructor.student_grades');
+
+Route::get('/instructor/classes/{id}/grades', [RegistrarController::class, 'studentGradesView'])
+    ->name('instructor.student_grades_view');
+    Route::get('/instructor/class/{id}/grades/{academic_period}', [InstructorController::class, 'studentGradesView'])
+    ->name('student.grades.view');
+
+
+    Route::post('/initialize-grades', [RegistrarController::class, 'initializeGrades'])
+    ->name('initialize.grades');
+
+
+    Route::post('/lock-in-grades', [RegistrarController::class, 'lockInGrades'])->name('lock.grades');
+
+    
 
 /*
 |--------------------------------------------------------------------------
-| REGISTRAR → CREATE CLASS (AUTH REQUIRED)
+| REGISTRAR – CREATE CLASS (AUTH REQUIRED)
 |--------------------------------------------------------------------------
 */
-
 Route::middleware('auth')->group(function () {
     Route::get('/registrar/classes', [RegistrarController::class, 'ClassesMenu'])->name('RegistrarClasses');
     Route::post('/registrar/classes/create', [RegistrarController::class, 'CreateClass'])->name('CreateClass');
@@ -112,16 +132,16 @@ Route::middleware('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| AUTH (GUEST ONLY)
+| AUTH ROUTES (GUEST ONLY)
 |--------------------------------------------------------------------------
 */
-
 Route::middleware(['guest'])->group(function () {
 
+    // Login/Register pages
     Route::get('/login', [AuthController::class, 'login'])->name('login');
     Route::get('/register', [AuthController::class, 'register'])->name('register');
 
-    // Register security
+    // Registration security (custom access code)
     Route::post('/register/security', function (\Illuminate\Http\Request $request) {
         $securityPassword = 'register_password';
 
@@ -129,14 +149,12 @@ Route::middleware(['guest'])->group(function () {
             session(['register_access' => true]);
             return response()->json(['success' => true]);
         }
-
         return response()->json(['success' => false, 'message' => 'Incorrect security code.'], 403);
     })->name('register.security');
 
-    // Login & Register POST
+    // Submit Login/Register
     Route::post('/login', [AuthController::class, 'LoginPost'])->name('login.post');
     Route::post('/register', [AuthController::class, 'RegisterPost'])->name('register.post');
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Google OAuth
     Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('login.google');
@@ -155,7 +173,6 @@ Route::middleware(['guest'])->group(function () {
 | MAIN PAGE + LOGOUT
 |--------------------------------------------------------------------------
 */
-
 Route::get('/', [IndexController::class, 'index'])->name('index');
 
 Route::post('/logout', function () {
@@ -163,23 +180,52 @@ Route::post('/logout', function () {
     return redirect('/login')->with('success', 'You have been logged out successfully.');
 })->name('logout');
 
-Route::get('/login', fn () => view('auth.login'));
-
 
 /*
 |--------------------------------------------------------------------------
-| REGISTRAR CLASS MANAGEMENT
+| REGISTRAR – FULL CLASS MANAGEMENT
+|--------------------------------------------------------------------------
+| Cleaned and arranged. No duplicated route names.
 |--------------------------------------------------------------------------
 */
 
+// Registrar Dashboard
 Route::get('/registrar_dashboard', [RegistrarController::class, 'index'])->name('registrar');
+
+// Classes List
 Route::get('/classes', [RegistrarController::class, 'registrar_classes'])->name('registrar_classes');
+
+// Create Class
 Route::post('/classes', [RegistrarController::class, 'CreateClass'])->name('classes.create');
+
+// Edit Class
 Route::put('/registrar_dashboard/{class}', [RegistrarController::class, 'EditClass'])->name('classes.update');
+
+// Delete Class
 Route::delete('/registrar_dashboard/{class}', [RegistrarController::class, 'DeleteClass'])->name('classes.destroy');
+
+// Show Class Details
 Route::get('/classes/{class}', [RegistrarController::class, 'show'])->name('class.show');
+
+// Add Student
 Route::post('/classes/class={class}', [RegistrarController::class, 'addstudent'])->name('class.addstudent');
+
+// Remove Student
 Route::delete('/classes/class={class}/student={student}', [RegistrarController::class, 'removestudent'])->name('class.removestudent');
+
+// Add Percentages + Scores
 Route::put('/classes/class={class}', [RegistrarController::class, 'addPercentageAndScores'])->name('class.addPercentageAndScores');
+
+// Show quizzes
 Route::get('/quizzesadded/class={class}', [RegistrarController::class, 'show'])->name('class.quizzes');
+
+// Add quiz + score
 Route::put('/quizzesadded/class={class}', [RegistrarController::class, 'addQuizAndScore'])->name('class.addquizandscore');
+
+   // Grading and Quiz Management
+    Route::get('/grading_view/{id}/{academic_period}', [RegistrarController::class, 'showGrading'])->name('instructor.grading_view');
+    Route::get('/student&grades_view/{id}/{academic_period}', [RegistrarController::class, 'studentGradesView'])->name('instructor.student&grades_view');
+    Route::put('/grading_view/{class}/add-quiz-scores', [RegistrarController::class, 'addQuizAndScore'])->name('grading_view.addQuizAndScore');
+    Route::get('/grading/scores/{classId}/{term}', [RegistrarController::class, 'getStudentScores'])->name('grading_view.getStudentScores');
+    Route::put('/class/{class}/add-percentage-scores', [RegistrarController::class, 'addPercentageAndScores'])->name('class.addPercentageAndScores');
+    Route::put('/grading_view/{class}', [RegistrarController::class, 'addPercentageAndScores'])->name('grading_view.addPercentageAndScores');
