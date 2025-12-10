@@ -100,16 +100,21 @@
             </div>
         </div>
         <div class="classes-main-container-box">
+           @php
+                $role = strtolower(auth()->user()->role);
+                $isDean = str_contains($role, 'dean');
+            @endphp
+
+            @if($isDean)
             <div class="iconBtbn">
                 <span class="fa-stack fa-2x iconBtn">
-                    <!-- Circle background -->
-                <i class="fa-solid fa-circle fa-stack-2x circle-bg"></i>
-                    <!-- Layers icon -->
-                <i class="fa-solid fa-layer-group fa-stack-1x layers-icon"></i>
-                    <!-- Plus icon -->
-                <i class="fa-solid fa-plus fa-stack-1x plus-icon"></i>
+                    <i class="fa-solid fa-circle fa-stack-2x circle-bg"></i>
+                    <i class="fa-solid fa-layer-group fa-stack-1x layers-icon"></i>
+                    <i class="fa-solid fa-plus fa-stack-1x plus-icon"></i>
                 </span>
             </div>
+            @endif
+
             @foreach ($classes as $class)
             <div class="classes-box">
                 <div class="classes-header">
@@ -142,14 +147,16 @@
                         <i class="fa-solid fa-trash"></i>
                     </span>
 
-                    <a href="{{ route('class.show', $class->id) }}" class="icon view-icon" data-tooltip="View">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                    </a>
+                 
+                        <a href="{{ route('class.show', $class->id) }}" class="icon view-icon" data-tooltip="View">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </a>
+                  
                 </div>
             </div>
             @endforeach
-
         </div>
+        
     </div>
 <script>
 document.querySelector('.iconBtbn').addEventListener('click', function() {

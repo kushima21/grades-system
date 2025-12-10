@@ -283,3 +283,186 @@
         border-bottom: #7876765d 1px solid;
         height: 50px;
     }
+
+    /*student-grades-container*/
+  
+    
+    .student-grades-container {
+        width: 100%;
+    }
+
+
+    .student-grades-header {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 50px;
+        background-color: #a2a0a069;
+        margin-top: 20px;
+    }
+    
+    .student-grades-header h2 {
+        font-size: 25px;
+        font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+        color: rgb(189, 50, 0);
+    }
+
+    .student-grades-m-container {
+        width: 100%;
+    }
+
+    .student-department-header {
+        padding: 20px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+        
+    .status-container {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 12px;
+        padding-left: 10px;
+    }
+
+    .status-span {
+        margin: 10px;
+        font-size: 13px;
+        color: gray;
+    }
+
+
+    .student-grades-wrapper {
+      flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+}
+
+.student-grades-table-container {
+      width: 100%;
+    border-collapse: collapse;
+}
+
+.student-grades-table-container th {
+        color: gray;
+        top: 0;
+        z-index: 1;
+        font-size: 12px;
+        padding-bottom: 20px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+    .student-grades-table-container td {
+        font-size: 12px;
+        text-align: center;
+        margin-top: 10px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+
+    .student-grades-table-container tr {
+        border-bottom: #7876765d 1px solid;
+        height: 50px;
+    }
+
+
+    /*decision-container*/
+    .decision-container {
+        width: 100%;
+    }
+
+    .decision-header {
+        padding-left: 20px;
+        font-size: 18px;
+        padding-top: 15px;
+        padding-bottom: 10px;
+    }
+
+    .decisionBtn-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .decision-container input {
+        margin-left: 20px;
+        margin-top: 10px;
+        width: 20px;
+        border-radius: 50%;
+    }
+
+    .decision-span {
+        padding-left: 5px;
+    }
+    .decision-container textarea {
+        margin-left: 20px;
+        margin-top: 10px;
+        width: 95%;
+        height: 100px;
+        border-radius: 10px;
+        padding: 10px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+    .deanDecisionBtn {
+        margin-left: 20px;
+        margin-bottom: 20px;
+    }
+
+    /*deanDecisionBtn*/
+    .deanDecisionBtn {
+       width: max-content;
+       padding-left: 20px;
+       padding-right: 20px;
+         height: 37px;
+         border: 2px solid rgb(41, 159, 5);
+         border-radius: 7px;
+         background-color: #ffffff;
+    }
+
+    .submitToRegistrarBTn {
+        width: max-content;
+        padding-left: 20px;
+        padding-right: 20px;
+        height: 37px;
+        border: 2px solid rgb(255, 83, 21);
+        border-radius: 7px;
+        background-color: #ffffff;
+    }
+    .class-status {
+        padding-left: 20px;
+        padding-top: 20px;
+    }
+
+    /*egistarDecisionBtn*/
+ 
+
+    .r-d-header {
+        padding-left: 20px;
+        font-size: 18px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        color: rgb(243, 113, 0);
+    }
+
+    .decision-span {
+        margin-left: 10px;
+    }
+    .r-d-header {
+        padding-bottom: 20px;
+    }
+
+    .registarDecisionBtn input {
+        margin-left: 20px;
+        height: 20px;
+        width: 25px;
+    }
+
+    .registrarDecisionBtn {
+        margin-left: 20px;
+        width: 200px;
+        height: 40px;
+        border-radius: 7px;
+        border: green 1px solid;
+        color: green;
+    }

@@ -25,17 +25,24 @@ class RegistrarController extends Controller
     {
         return view("registrar.registrar_dashboard");
     }
- public function registrar_classes()
+public function registrar_classes()
 {
     $classes = Classes::orderBy('id', 'desc')->get();
-
     $instructors = User::where('role', 'LIKE', '%instructor%')->get();
     $classes_student = Classes_Student::all()->groupBy('classID');
     $finalGrades = DB::table('final_grade')->get();
 
+    // Fetch logged in user's role as array (lowercase for safety)
+    $userRoles = [strtolower(auth()->user()->role)];
+
+    // Add total student count per class
+    foreach ($classes as $class) {
+        $class->totalStudents = Classes_Student::where('classID', $class->id)->count();
+    }
+
     return view(
         'registrar.classes',
-        compact('classes', 'instructors', 'classes_student', 'finalGrades')
+        compact('classes', 'instructors', 'classes_student', 'finalGrades', 'userRoles')
     );
 }
 
@@ -222,151 +229,179 @@ public function EditClass(Request $request, Classes $class)
     }
 
 
-    public function show(Request $request, $class)
-    {
-        $classes = Classes::where('id', $class)->first();
+public function show(Request $request, $class)
+{
+    $classes = Classes::where('id', $class)->first();
 
-        if (!$classes) {
-            return redirect()->route('instructor.my_class')
-                             ->with('warning', 'The class you are trying to view no longer exists.');
-        }
+    if (!$classes) {
+        return redirect()->route('instructor.my_class')
+                         ->with('warning', 'The class you are trying to view no longer exists.');
+    }
 
-        // 💯 This part is untouched and still works for ADDING STUDENTS
-        $enrolledStudentIds = Classes_Student::where('classID', $class)->pluck('studentID')->toArray();
+    // Count enrolled students
+    $totalStudents = Classes_Student::where('classID', $class)->count();
 
-        $students = User::where('role', 'student')
-            ->whereNotIn('studentID', $enrolledStudentIds)
-            ->get();
+    // Students not yet enrolled
+    $enrolledStudentIds = Classes_Student::where('classID', $class)->pluck('studentID')->toArray();
 
-        // 💯 This part still works for displaying ENROLLED STUDENTS
-        $classes_student = Classes_Student::where('classID', $class)->get();
+    $students = User::where('role', 'student')
+        ->whereNotIn('studentID', $enrolledStudentIds)
+        ->get();
 
-        // 💯 This part still works for quizzes
-        $quizzesandscores = QuizzesAndScores::where('classID', $class)->get();
+    // Enrolled students
+    $classes_student = Classes_Student::where('classID', $class)->get();
 
-        // 💯 This part still works for percentages
-        $percentage = Percentage::where('classID', $class)->get();
+    // Quizzes and percentages
+    $quizzesandscores = QuizzesAndScores::where('classID', $class)->get();
+    $percentage = Percentage::where('classID', $class)->get();
 
-        // 💯 This part still works for final grades
-        $finalGrades = DB::table('final_grade')
-            ->where('classID', $class)
-            ->get();
+    // Final grades
+    $finalGrades = DB::table('final_grade')
+        ->where('classID', $class)
+        ->get();
 
-        // ✅ NOW THIS IS THE NEW PART - FILTER BY DEPARTMENT FOR DEAN
-        $user = Auth::user();
-        $userRoles = explode(',', $user->role);
+    // Check if dean_status is Confirmed for this class
+    $deanStatusConfirmed = DB::table('final_grade')
+        ->where('classID', $class)
+        ->where('dean_status', 'Confirmed')
+        ->exists();
 
-        if (in_array('dean', $userRoles)) {
-            // ✅ The user is a dean, now filter by department
-            $userDepartment = $user->department;
+    // Check if ALL final grades are Locked & Submitted
+    $hasLockedAndSubmitted = $finalGrades->isNotEmpty() &&
+        $finalGrades->every(function ($grade) {
+            return $grade->status === 'Locked' && $grade->submit_status === 'Submitted';
+        });
 
+    // ===============================
+    // FILTER STUDENTS BY DEPARTMENT
+    // ===============================
+    $user = Auth::user();
+    $userRoles = explode(',', $user->role);
+
+    if (in_array('dean', $userRoles)) {
+        $userDepartment = $user->department;
+
+        if (strtolower($userDepartment) === 'bachelor of science in education') {
+            // Dean of BSEd can see both BEED and BSED students
+            $filteredStudents = Classes_Student::where('classID', $class)
+                ->whereIn('department', [
+                    'Bachelor of Elementary Education',
+                    'Bachelor of Secondary Education'
+                ])
+                ->get();
+        } else {
+            // Other deans: only their own department
             $filteredStudents = Classes_Student::where('classID', $class)
                 ->where('department', $userDepartment)
                 ->get();
-        } else {
-            // ✅ If the user is not a dean, show all students
-            $filteredStudents = Classes_Student::where('classID', $class)->get();
         }
-
-        // ✅ Now pass EVERYTHING to the Blade (including the new filtered students)
-        return view('registrar.classes_view', compact(
-            'class',
-            'classes',
-            'students',
-            'classes_student',
-            'quizzesandscores',
-            'percentage',
-            'finalGrades',
-            'filteredStudents'
-        ));
+    } else {
+        // Non-deans: show all students
+        $filteredStudents = Classes_Student::where('classID', $class)->get();
     }
 
-    public function importCSV(Request $request, $class)
-    {
-        // Fetch class model
-        $class = Classes::findOrFail($class);
+    return view('registrar.classes_view', compact(
+        'classes',
+        'students',
+        'classes_student',
+        'quizzesandscores',
+        'percentage',
+        'finalGrades',
+        'filteredStudents',
+        'hasLockedAndSubmitted',
+        'deanStatusConfirmed',
+        'totalStudents' // 🔥 pass total student count
+    ));
+}
 
-        // Validate file
-        $request->validate([
-            'students_csv' => 'required|mimes:csv,txt|max:2048'
-        ]);
 
-        // Read CSV file
-        $file = $request->file('students_csv');
-        $csvData = array_map('str_getcsv', file($file));
 
-        // Remove CSV header row
-        array_shift($csvData);
 
-        $programToDepartment = [
-            'BSBA' => 'Bachelor of Science in Business Administration',
-            'BSCS' => 'Bachelor of Science in Computer Science',
-            'BSSW' => 'Bachelor of Science in Social Work',
-            'BAELS' => 'Bachelor of Arts in English Language Studies',
-            'BEED'  => 'Bachelor of Elementary Education',
-            'BSED' => 'Bachelor of Secondary Education',
-            'BSCRIM' => 'Bachelor of Science in Criminology',
+
+public function importCSV(Request $request, $class)
+{
+    // Fetch class model
+    $class = Classes::findOrFail($class);
+
+    // Validate file
+    $request->validate([
+        'students_csv' => 'required|mimes:csv,txt|max:2048'
+    ]);
+
+    // Read CSV file
+    $file = $request->file('students_csv');
+    $csvData = array_map('str_getcsv', file($file));
+
+    // Remove CSV header row
+    array_shift($csvData);
+
+    $programToDepartment = [
+        'BSBA' => 'Bachelor of Science in Business Administration',
+        'BSBA-OM' => 'Bachelor of Science in Business Administration',
+        'BSBA-FM' => 'Bachelor of Science in Business Administration',
+        'BSCS' => 'Bachelor of Science in Computer Science',
+        'BSSW' => 'Bachelor of Science in Social Work',
+        'BAELS' => 'Bachelor of Arts in English Language Studies',
+        'BEED'  => 'Bachelor of Elementary Education',
+        'BSED-Math' => 'Bachelor of Secondary Education',
+        'BSED-English' => 'Bachelor of Secondary Education',
+        'BSED' => 'Bachelor of Secondary Education',
+        'BSCRIM' => 'Bachelor of Science in Criminology',
+    ];
+
+    $students = [];
+    $insertedStudentIDs = [];
+
+    foreach ($csvData as $row) {
+        if (count($row) < 5) continue; // Skip invalid rows
+
+        $fullname = trim($row[1] . ", " . $row[2] . " " . $row[3]);
+        $program = strtoupper(trim(explode('-', $row[6])[0]));
+
+        $department = $programToDepartment[$program] ?? 'Unknown Department';
+
+        $students[] = [
+            'studentID'  => $row[4],
+            'email'      => $row[5],
+            'name'       => $fullname,
+            'gender'     => null,
+            'department' => $department,
+            'classID'    => $class->id,
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
 
-        $students = [];
-        $insertedStudentIDs = [];
-
-        foreach ($csvData as $row) {
-            if (count($row) < 5) {
-                continue; // Skip invalid rows
-            }
-
-            $fullname = trim($row[1] . ", " . $row[2] . " " . $row[3]);
-            $program = strtoupper(trim(explode('-', $row[6])[0]));
-
-
-            $department = $programToDepartment[$program] ?? 'Unknown Department';
-
-
-            $students[] = [
-                'studentID'  => $row[4],
-                'email'      => $row[5],
-                'name'       => $fullname,
-                'gender'     => null,
-                'department' => $department,
-                'classID'    => $class->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-
-            // Collect student IDs for periodic term insertion
-            $insertedStudentIDs[] = $row[4];
-        }
-
-        // Bulk insert students
-        Classes_Student::insert($students);
-
-        // Array of periodic terms
-        $periodicTerms = ['Prelim', 'Midterm', 'Semi-Finals', 'Finals'];
-
-        // Prepare data for quizzes_scores
-        $quizScores = [];
-        foreach ($insertedStudentIDs as $studentID) {
-            foreach ($periodicTerms as $term) {
-                $quizScores[] = [
-                    'classID'             => $class->id,
-                    'studentID'           => $studentID,
-                    'periodic_term'       => $term,
-                    'quizzez'             => 0,  // Default 0
-                    'attendance_behavior' => 0,  // Default 0
-                    'assignments'         => 0,  // Default 0
-                    'exam'                => 0,  // Default 0
-                    'created_at'          => now(),
-                    'updated_at'          => now(),
-                ];
-            }
-        }
-
-        // Bulk insert quiz scores
-        QuizzesAndScores::insert($quizScores);
-
-        return back()->with('success', 'Students imported successfully.');
+        $insertedStudentIDs[] = $row[4];
     }
+
+    // Bulk insert students
+    Classes_Student::insert($students);
+
+    // Insert default quiz scores
+    $periodicTerms = ['Prelim', 'Midterm', 'Semi-Finals', 'Finals'];
+    $quizScores = [];
+
+    foreach ($insertedStudentIDs as $studentID) {
+        foreach ($periodicTerms as $term) {
+            $quizScores[] = [
+                'classID'             => $class->id,
+                'studentID'           => $studentID,
+                'periodic_term'       => $term,
+                'quizzez'             => 0,
+                'attendance_behavior' => 0,
+                'assignments'         => 0,
+                'exam'                => 0,
+                'created_at'          => now(),
+                'updated_at'          => now(),
+            ];
+        }
+    }
+
+    QuizzesAndScores::insert($quizScores);
+
+    return back()->with('success', 'Students imported successfully.');
+}
+
 
 
     public function addstudent(Request $request, Classes $class)
@@ -669,41 +704,47 @@ public function studentGradesView($id, $academic_period, Request $request)
         ->where('academic_period', $academic_period)
         ->get();
 
-    $initialize = $request->input('initialize', false);
-
-    if ($initialize) {
-
-        // MUST be sorted ascending by 'grades'
-        $transmutations = \App\Models\FinalTransmutation::orderBy('grades', 'asc')->get();
-
-        foreach ($grades as $g) {
-
-            $matched = null;
-
-            // Loop and find the highest transmutation whose grade_from <= student's final grade
-            foreach ($transmutations as $t) {
-                if ($g->final >= $t->grades) {
-                    $matched = $t;
-                } else {
-                    break;
-                }
-            }
-
-            if ($matched) {
-                $g->remarks = $matched->remarks;
-            } else {
-                $g->remarks = 'FAILED';
-            }
-
-            $g->save();
-        }
-    }
-
     $class = \App\Models\Classes::find($id);
 
-    return view('instructor.student&grades_view', compact('grades', 'class', 'academic_period'));
-}
+    // Get Department Status from final_grade
+    $departmentStatus = \App\Models\FinalGrade::select(
+        'department',
+        \DB::raw("MAX(status) as status"),
+        \DB::raw("MAX(submit_status) as submit_status"),
+        \DB::raw("MAX(dean_status) as dean_status"),
+        \DB::raw("MAX(registrar_status) as registrar_status")
+    )
+    ->where('classID', $id)
+    ->groupBy('department')
+    ->get()
+    ->keyBy('department');
 
+    // 🔍 Check if there are still raw_grades NOT saved in final_grade OR not locked/submitted
+    $gradesToInitializeExist = \App\Models\RawGrade::where('classID', $id)
+        ->where('academic_period', $academic_period)
+        ->where(function($query) use ($id) {
+            $query->whereNotIn('studentID', function($sub) use ($id) {
+                $sub->select('studentID')
+                    ->from('final_grade')
+                    ->where('classID', $id)
+                    ->where(function($q) {
+                        $q->where('status', 'Locked')
+                          ->orWhere('submit_status', 'Submitted')
+                          ->orWhere('dean_status', 'Approved'); // kung gusto nimo gi-consider nga approved ang dean
+                    });
+            })
+            ->orWhereNull('remarks'); // optional: para ma-check pud ang raw grades nga wala remarks
+        })
+        ->exists();
+
+    return view('instructor.student&grades_view', compact(
+        'grades',
+        'class',
+        'academic_period',
+        'departmentStatus',
+        'gradesToInitializeExist'
+    ));
+}
 
 
 
@@ -717,7 +758,6 @@ public function showGrading($id, $academic_period)
         ? ['Prelim', 'Finals']
         : ['Prelim', 'Midterm', 'Semi-Finals', 'Finals'];
 
-    // Percentages setup
     $percentage = [];
     foreach ($terms as $term) {
         $percentage[$term] = Percentage::where('classID', $class->id)
@@ -725,30 +765,48 @@ public function showGrading($id, $academic_period)
             ->first();
     }
 
-    // Students enrolled in the class
+    // Get all enrolled students in this class
     $students = Classes_Student::where('classID', $class->id)->get();
 
-    // Scores per student per term
-    $scores = [];
-    foreach ($terms as $term) {
-        $studentScores = QuizzesAndScores::where('classID', $class->id)
-            ->where('periodic_term', $term)
-            ->get();
+    $quizzesScores = QuizzesAndScores::where('classID', $class->id)->get()->keyBy('studentID');
 
-        foreach ($studentScores as $score) {
-            $scores[$score->studentID . '_' . $term] = $score;
+    // Fetch final grades keyed by studentID
+    $finalGrades = FinalGrade::where('classID', $class->id)->get()->keyBy('studentID');
+
+    $rawGrades = RawGrade::where('classID', $class->id)->get()->keyBy('studentID');
+
+    // =========================
+    // Determine if "Calculate" button should show
+    // =========================
+    $showCalculateButton = false;
+
+    foreach ($students as $student) {
+        $finalGrade = $finalGrades[$student->studentID] ?? null;
+
+        $status = trim($finalGrade->status ?? '');
+        $submit_status = trim($finalGrade->submit_status ?? '');
+
+        // Only skip students who are Locked + Submitted
+        if (!$finalGrade || $status !== 'Locked' || $submit_status !== 'Submitted') {
+            $showCalculateButton = true;
+            break; // at least one student needs grading
         }
     }
 
     return view('instructor.grading_view', compact(
-        'class',
-        'percentage',
-        'students',
-        'scores',
-        'academic_period',
-        'terms'
+        'class', 'percentage', 'students', 'quizzesScores', 'finalGrades', 'rawGrades',
+        'academic_period', 'terms', 'showCalculateButton'
     ));
 }
+
+
+
+
+
+
+
+
+
 
 
 
@@ -864,34 +922,41 @@ public function initializeGrades(Request $request)
             ]);
 
         // Insert or update final_grade table
-        DB::table('final_grade')->updateOrInsert(
-            [
-                'classID'   => $grade['classID'],
-                'studentID' => $grade['studentID']
-            ],
-            [
-                'course_no'         => optional($classInfo)->course_no,
-                'descriptive_title' => optional($classInfo)->descriptive_title,
-                'instructor'        => optional($classInfo)->instructor,
-                'academic_period'   => optional($classInfo)->academic_period,
-                'schedule'          => optional($classInfo)->schedule,
+       // Check if a final_grade row already exists
+$existing = DB::table('final_grade')
+    ->where('classID', $grade['classID'])
+    ->where('studentID', $grade['studentID'])
+    ->first();
 
-                'name'       => optional($studentInfo)->name,
-                'gender'     => optional($studentInfo)->gender,
-                'email'      => optional($studentInfo)->email,
-                'department' => optional($studentInfo)->department,
+DB::table('final_grade')->updateOrInsert(
+    [
+        'classID'   => $grade['classID'],
+        'studentID' => $grade['studentID']
+    ],
+    [
+        'course_no'         => optional($classInfo)->course_no,
+        'descriptive_title' => optional($classInfo)->descriptive_title,
+        'instructor'        => optional($classInfo)->instructor,
+        'academic_period'   => optional($classInfo)->academic_period,
+        'schedule'          => optional($classInfo)->schedule,
 
-                'prelim'      => $grade['prelim'] ?? null,
-                'midterm'     => $grade['midterm'] ?? null,
-                'semi_finals' => $grade['semi_finals'] ?? null,
-                'final'       => $grade['final'] ?? null,
+        'name'       => optional($studentInfo)->name,
+        'gender'     => optional($studentInfo)->gender,
+        'email'      => optional($studentInfo)->email,
+        'department' => optional($studentInfo)->department,
 
-                'remarks'    => $remarks,
-                'status'     => '',
-                'updated_at' => now(),
-                'created_at' => now(),
-            ]
-        );
+        'prelim'      => $grade['prelim'] ?? null,
+        'midterm'     => $grade['midterm'] ?? null,
+        'semi_finals' => $grade['semi_finals'] ?? null,
+        'final'       => $grade['final'] ?? null,
+
+        'remarks'     => $remarks,
+        'status'      => $existing->status ?? '', // ← preserve existing status
+        'updated_at'  => now(),
+        'created_at'  => $existing ? null : now(),
+    ]
+);
+
     }
 
     return back()->with('success', 'Grades have been initialized successfully!');
@@ -899,6 +964,49 @@ public function initializeGrades(Request $request)
 
 
 
+
+public function showClassGrades($classID)
+{
+    // Fetch class info
+    $class = Classes::findOrFail($classID);
+
+    // Fetch all grades for this class
+    $grades = DB::table('final_grade')
+        ->where('classID', $classID)
+        ->get();
+
+    // Calculate department status (locked + submitted)
+    $departmentStatus = DB::table('final_grade')
+        ->where('classID', $classID)
+        ->select(
+            DB::raw('TRIM(department) as department'),
+            DB::raw('MAX(CASE WHEN TRIM(status) = "Locked" THEN 1 ELSE 0 END) as locked'),
+            DB::raw('COUNT(CASE WHEN LOWER(TRIM(submit_status)) LIKE "submitted%" THEN 1 END) as submitted_count')
+        )
+        ->groupBy('department')
+        ->get()
+        ->mapWithKeys(function($row) {
+            return [
+                $row->department => (object)[
+                    'status' => $row->locked ? 'Locked' : 'Not Yet Locked',
+                    'submit_status' => $row->submitted_count > 0 ? 'Submitted' : 'Not Submitted Yet',
+                    'dean_status' => 'Pending',        // optional default
+                    'registrar_status' => 'Pending'    // optional default
+                ]
+            ];
+        });
+
+    // Group grades by department
+    $studentsByDept = $grades->groupBy('department');
+
+    // Return to registrar view
+    return view('registrar.classes_view', [
+        'class' => $class,
+        'grades' => $grades,
+        'studentsByDept' => $studentsByDept,
+        'departmentStatus' => $departmentStatus
+    ]);
+}
 
 
 public function lockInGrades(Request $request)
@@ -974,72 +1082,170 @@ public function lockInGrades(Request $request)
         return back()->with('success', "Final grades have been unlocked!");
     }
 
+public function submitToDean(Request $request)
+{
+    $request->validate([
+        'classID' => 'required',
+        'department' => 'required',
+    ]);
 
-    public function SubmitGrades(Request $request)
-    {
-        $department = $request->input('department');
-        $classID = $request->input('classID'); // 🔥 Include classID
+    $classID = $request->classID;
+    $department = $request->department;
 
-        if (!$department || !$classID) {
-            return back()->with('error', 'Invalid request. No department or class selected.');
-        }
-
-        // Update submit_status to 'Submitted' for locked grades in the selected department and class
-        DB::table('final_grade')
-            ->where('department', $department)
-            ->where('classID', $classID) // 🔥 Ensure only this class is affected
-            ->where('status', 'Locked')
-            ->update([
-                'submit_status' => 'Submitted',
-                'dean_status' => '',
-                'dean_comment' => '',
-                'registrar_status' => '',
-                'registrar_comment' => '',
-                'updated_at' => now(),
-            ]);
-
-        Classes::where('id', $classID)->update(['status' => 'Grades Submitted, Waiting for dean\'s approval']);
-
-        $user = Auth::user();
-
-        $class = Classes::find($classID);
-
-        if (stripos($department, 'education') !== false) {
-            $users = User::whereRaw('LOWER(department) LIKE ?', ['%education%'])->get();
-        } else {
-            $users = User::where('department', $department)->get();
-        }
-
-        $dean = $users->first(function ($user) {
-            $roles = explode(',', $user->role); // assuming role is stored as comma-separated
-            return in_array('dean', array_map('trim', $roles));
-        });
-
-
-        // Store notification
-        DB::table('notif_table')->insert([
-            'notif_type'      => 'Class grades has been submitted to Dean of ' . $department  . ' Department',
-            'class_id'        => $class->id,
-            'class_course_no' => $class->course_no,
-            'class_descriptive_title' => $class->descriptive_title,
-            'department'      => $user->department ?? null, // Optional if you store department
-            'added_by_id'     => $user->studentID,
-            'added_by_name'   => $user->name,
-            'target_by_id'    => $dean->studentID ?? null,
-            'target_by_name'  => $dean->name ?? null,
-            'status_from_added'    => 'unchecked',
-            'status_from_target'    => 'unchecked',
-            'created_at' => now(),
+    // Update final_grade table submission status
+    DB::table('final_grade')
+        ->where('classID', $classID)
+        ->where('department', $department)
+        ->update([
+            'submit_status' => 'Submitted',
             'updated_at' => now(),
         ]);
 
-        if($user->name == $class->instructor && strpos($user->role, 'dean') !== false){
-            return back()->with('success', "Grades for $department have been submitted to the its corresponding Dean!");
-        }
+    // Optional Class Status Message
+    Classes::where('id', $classID)->update([
+        'status' => "Pending Dean Approval ($department)",
+        'updated_at' => now(),
+    ]);
 
-        return redirect()->route('instructor.my_class')->with('success', "Grades for $department have been submitted to the its corresponding Dean!");
+    // Notify Dean
+    $class = Classes::find($classID);
+    $submitter = Auth::user();
+    $dean = User::where('role', 'dean')->first(); // adjust to your database
 
+    DB::table('notif_table')->insert([
+        'notif_type' => "Submitted to Dean",
+        'class_id' => $classID,
+        'department' => $department,
+        'class_course_no' => $class->course_no,
+        'class_descriptive_title' => $class->descriptive_title,
+        'added_by_id' => $submitter->studentID,
+        'added_by_name' => $submitter->name,
+        'target_by_id' => $dean->studentID ?? null,
+        'target_by_name' => $dean->name ?? null,
+        'status_from_added' => 'unchecked',
+        'status_from_target' => 'unchecked',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+return redirect(url()->previous() . '#' . $department)
+    ->with('success', "Grades were submitted to Dean successfully!");
+}
+
+public function deanDecision(Request $request)
+{
+    $request->validate([
+        'dean_status' => 'required',
+        'department' => 'required',
+        'classID' => 'required',
+    ]);
+
+    $department = $request->department;
+    $classID = $request->classID;
+    $deanStatus = $request->dean_status;
+    $remarks = $request->dean_remarks ?? '';
+
+    // Update final_grade table
+    DB::table('final_grade')
+        ->where('classID', $classID)
+        ->where('department', $department)
+        ->update([
+            'dean_status' => $deanStatus,
+            'dean_comment' => ($deanStatus === 'Returned') ? $remarks : '',
+            'updated_at' => now(),
+        ]);
+
+    // Update class status message
+    $class = Classes::find($classID);
+    $statusMessage = ($deanStatus === 'Confirmed')
+        ? 'Dean approved the grades. Ready to submit to Registrar'
+        : 'Dean returned the grades. Waiting for instructor action';
+
+    Classes::where('id', $classID)->update(['status' => $statusMessage]);
+
+    // Notify Instructor
+    $instructor = User::where('name', $class->instructor)->first();
+    $dean = Auth::user();
+
+    DB::table('notif_table')->insert([
+        'notif_type' => "Dean's decision: $deanStatus",
+        'class_id' => $classID,
+        'class_course_no' => $class->course_no,
+        'class_descriptive_title' => $class->descriptive_title,
+        'department' => $department,
+        'added_by_id' => $dean->studentID,
+        'added_by_name' => $dean->name,
+        'target_by_id' => $instructor->studentID ?? null,
+        'target_by_name' => $instructor->name ?? null,
+        'status_from_added' => 'unchecked',
+        'status_from_target' => 'unchecked',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return back()->with('success', "Decision ($deanStatus) has been submitted successfully!");
+}
+
+
+public function submitToRegistrar(Request $request)
+{
+    $department = $request->input('department');
+    $classID = $request->input('classID'); 
+
+    if (!$department || !$classID) {
+        return back()->with('error', 'Invalid request. No department or class selected.');
     }
+
+    // Update submit_status to 'Submitted' for locked grades in the selected department and class
+    DB::table('final_grade')
+        ->where('department', $department)
+        ->where('classID', $classID)
+        ->where('status', 'Locked')
+        ->update([
+            'registrar_status' => 'Pending',
+            'updated_at' => now(),
+        ]);
+
+    Classes::where('id', $classID)
+        ->update(['status' => 'Grades has been submitted to the registrar, Waiting for approval']);
+
+    $user = Auth::user();
+    $class = Classes::find($classID);
+    $users = User::all();
+
+    $registrar = $users->first(function ($user) {
+        $roles = explode(',', $user->role);
+        return in_array('registrar', array_map('trim', $roles));
+    });
+
+    $instructor = $users->firstWhere('name', $class->instructor);
+
+    $baseNotif = [
+        'notif_type'      => 'Class grades submitted to the Registrar',
+        'class_id'        => $class->id,
+        'class_course_no' => $class->course_no,
+        'class_descriptive_title' => $class->descriptive_title,
+        'department'      => $user->department ?? null,
+        'added_by_id'     => $user->studentID,
+        'added_by_name'   => $user->name,
+        'status_from_added'    => 'unchecked',
+        'status_from_target'    => 'unchecked',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ];
+
+    DB::table('notif_table')->insert(array_merge($baseNotif, [
+        'target_by_id' => $registrar->studentID ?? null,
+        'target_by_name' => $registrar->name ?? null,
+    ]));
+
+    DB::table('notif_table')->insert(array_merge($baseNotif, [
+        'target_by_id' => $instructor->studentID ?? null,
+        'target_by_name' => $instructor->name ?? null,
+    ]));
+
+    return redirect()->route('registrar_classes')
+        ->with('success', "Grades for $department have been submitted to the Registrar!");
+}
 
     public function SubmitGradesRegistrar(Request $request)
     {

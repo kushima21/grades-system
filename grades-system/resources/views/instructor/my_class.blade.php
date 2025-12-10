@@ -22,29 +22,31 @@
         </div>
 
         <div class="my-class-main-box-container">
-            <div class="my-box">
-               <div class="my-class-header">
-                    <h3 class="my-c">CS-10</h3>
-                    <h3 class="subheader">Programming 1</h3>
+            @foreach ($classes as $class)
+                <div class="my-box">
+                    <div class="my-class-header">
+                        <h3 class="my-c">{{ $class->course_no }}</h3>
+                        <h3 class="subheader">{{ $class->descriptive_title }}</h3>
+                    </div>
+                    <div class="middle-c">
+                        <span>{{ $class->academic_year }}</span>
+                        <br>
+                        <span>School Period: {{ $class->academic_period }}</span>
+                        <br>
+                        <span>Schedule: {{ $class->schedule }}</span>
+                        <br>
+                        <span>Status: {{ $class->status }}</span>
+                    </div>
+                    <div class="bottom-c">
+                        <span>Instructor: {{ $class->instructor }}</span>
+                        <a href="{{ route('class.show', $class->id) }}" class="icon view-icon" data-tooltip="View">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </a>
+                    </div>
                 </div>
-                <div class="middle-c">
-                    <span>School Year: 2025-2026</span>
-                    <br>
-                    <span>School Period: 1st Semester</span>
-                    <br>
-                    <span>Schedule: 8:00am-10:00am MTH</span>
-                    <br>
-                    <span>Total Student: 30</span>
-                    <br>
-                    <span>Status: Active</span>
-                </div>
-                <div class="bottom-c">
-                    <span>Instructor: John Mark Hondrada</span>
-                    <a href="#">
-                        <i class="fa-solid fa-right-from-bracket"></i> 
-                    </a>
-                </div>
-            </div>
+            @endforeach
         </div>
+
+
     </div>
 @endsection

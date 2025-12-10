@@ -430,3 +430,10 @@
         background: linear-gradient(orangered, rgb(164, 45, 1));
         color: #fff;
     }
+
+    .waiting-dean-approval {
+    color: rgb(239, 76, 0);
+    font-size: 14px;
+    padding-bottom: 20px;
+    margin-left: 20px;
+}

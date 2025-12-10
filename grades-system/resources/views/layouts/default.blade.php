@@ -100,14 +100,16 @@
                                 </a>
                             </div>
 
-                          @if (Auth::check() && (Auth::user()->role === 'instructor,dean'))
-                            <div class="manage-links">
-                                <a href="{{ url('/classes') }}">
-                                    <span>All Classes</span>
-                                </a>
-                            </div>
-                        @endif
-                  
+                          @if (Auth::check() && (
+                                    in_array('dean', explode(',', Auth::user()->role)) || 
+                                    in_array('registrar', explode(',', Auth::user()->role))
+                                ))
+                                <div class="manage-links">
+                                    <a href="{{ url('/classes') }}">
+                                        <span>All Classes</span>
+                                    </a>
+                                </div>
+                            @endif
 
 
                             <div class="manage-links">

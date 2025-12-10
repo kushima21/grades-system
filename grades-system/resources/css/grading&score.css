@@ -210,8 +210,8 @@
         align-items: center;
     }
 
-    .gradeBTn button {
-        margin: 15px;
+   .lockBtn {
+       margin: 15px;
         width: max-content;
         padding-left: 20px;
         padding-right: 20px;
@@ -222,7 +222,7 @@
         color: #060606;
         border: 1px solid rgb(246, 66, 0);
         font-weight: 400;
-    }
+   }
 
     .initialBtn {
         width: 100%;
@@ -249,3 +249,70 @@
         font-size: 12px;
         font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
     }
+
+    .subToDeanBTn {
+         margin: 15px;
+        width: max-content;
+        padding-left: 20px;
+        padding-right: 20px;
+        height: 37px;
+        border-radius: 8px;
+        font-size: 13px;
+        background: #fff;
+        color: #060606;
+        border: 1px solid rgb(0, 128, 2);
+        font-weight: 400;
+    }
+
+
+    /*decision-container*/
+    .decision-container {
+        width: 100%;
+    }
+
+    .decision-header {
+        padding-left: 20px;
+        font-size: 18px;
+        padding-top: 15px;
+        padding-bottom: 10px;
+    }
+
+    .decision-container input {
+        margin-left: 20px;
+        margin-top: 10px;
+        width: 20px;
+        border-radius: 50%;
+    }
+
+    .decision-span {
+        padding-left: 5px;
+    }
+    .decision-container textarea {
+        margin-left: 20px;
+        margin-top: 10px;
+        width: 95%;
+        height: 100px;
+        border-radius: 10px;
+        padding: 10px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+    .deanDecisionBtn {
+        margin-left: 20px;
+    }
+
+    /*deanDecisionBtn*/
+    .deanDecisionBtn {
+       width: max-content;
+       padding-left: 20px;
+       padding-right: 20px;
+         height: 37px;
+         border: 2px solid rgb(41, 159, 5);
+         border-radius: 7px;
+         background-color: #ffffff;
+    }
+
+    .in-class {
+        margin-bottom: 20px;
+    }
+

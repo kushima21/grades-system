@@ -2,21 +2,24 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
 @vite(['resources/css/grading_view.css', 'resources/js/app.js'])
 
-
 @section('content')
-    <div class="grading-view-main-container">
-        <div class="span">
-            <span>Admin</span>
-            <span>></span>
-            <span>Manage</span>
-            <span>></span>
-            <span>Grading & Score</span>
-        </div>
-        <h2 class="my-header">
-            Grading & Score
-        </h2>
+<div class="grading-view-main-container">
 
-       {{-- ================= CLASS VALIDATION ================= --}}
+    {{-- NAV PATH --}}
+    <div class="span">
+        <span>Admin</span>
+        <span>></span>
+        <span>Manage</span>
+        <span>></span>
+        <span>Grading & Score</span>
+    </div>
+
+    <h2 class="my-header">Grading & Score</h2>
+    @php
+    $dept = 'Bachelor of Science in Computer Science'; // dynamic if needed
+    $deptStatus = $departmentStatus[$dept] ?? null;
+@endphp
+    {{-- CLASS VALIDATION --}}
     @if (!isset($class) || !$class)
         <script>
             console.warn('Class not found. Redirecting...');
@@ -105,7 +108,6 @@
                         <button type="button" class="save-btn" onclick="saveAllDefaults('{{ $term }}')">
                             💾 Save Default All
                         </button>
-
                         <p class="note">⚠ Save first before entering student scores.</p>
                     </div>
                 </form>
@@ -152,47 +154,53 @@
                             </thead>
                             <tbody id="student-scores-body">
                             @foreach($students as $student)
-                            <tr data-student-id="{{ $student->studentID }}">
-                                <td>{{ $student->name }}</td>
+                                <tr data-student-id="{{ $student->studentID }}">
+                                    <td>{{ $student->name }}</td>
 
-                                <td><input type="number" name="scores[{{ $student->studentID }}][quizzez]" class="input-box" value="0" min="0" step="0.01"></td>
-                                <td><div class="readonly-box quizzez-score">0.00</div></td>
-                                <td><div class="readonly-box quizzez-weighted">0.00</div></td>
+                                    <td><input type="number" name="scores[{{ $student->studentID }}][quizzez]" class="input-box" value="0" min="0" step="0.01"></td>
+                                    <td><div class="readonly-box quizzez-score">0.00</div></td>
+                                    <td><div class="readonly-box quizzez-weighted">0.00</div></td>
 
-                                <td><input type="number" name="scores[{{ $student->studentID }}][attendance_behavior]" class="input-box" value="0" min="0" step="0.01"></td>
-                                <td><div class="readonly-box attendance_behavior-score">0.00</div></td>
-                                <td><div class="readonly-box attendance_behavior-weighted">0.00</div></td>
+                                    <td><input type="number" name="scores[{{ $student->studentID }}][attendance_behavior]" class="input-box" value="0" min="0" step="0.01"></td>
+                                    <td><div class="readonly-box attendance_behavior-score">0.00</div></td>
+                                    <td><div class="readonly-box attendance_behavior-weighted">0.00</div></td>
 
-                                <td><input type="number" name="scores[{{ $student->studentID }}][assignments]" class="input-box" value="0" min="0" step="0.01"></td>
-                                <td><div class="readonly-box assignments-score">0.00</div></td>
-                                <td><div class="readonly-box assignments-weighted">0.00</div></td>
+                                    <td><input type="number" name="scores[{{ $student->studentID }}][assignments]" class="input-box" value="0" min="0" step="0.01"></td>
+                                    <td><div class="readonly-box assignments-score">0.00</div></td>
+                                    <td><div class="readonly-box assignments-weighted">0.00</div></td>
 
-                                <td><input type="number" name="scores[{{ $student->studentID }}][exam]" class="input-box" value="0" min="0" step="0.01"></td>
-                                <td><div class="readonly-box exam-score">0.00</div></td>
-                                <td><div class="readonly-box exam-weighted">0.00</div></td>
+                                    <td><input type="number" name="scores[{{ $student->studentID }}][exam]" class="input-box" value="0" min="0" step="0.01"></td>
+                                    <td><div class="readonly-box exam-score">0.00</div></td>
+                                    <td><div class="readonly-box exam-weighted">0.00</div></td>
 
-                                <td>
-                                <div class="readonly-box">
-                                    <p class="raw-grade-display">0.00</p>
-                                    <input type="hidden" name="scores[{{ $student->studentID }}][raw_grade]" class="raw-grade-input" value="0.00">
-                                </div>
-                            </td>
-                            </tr>
+                                    <td>
+                                        <div class="readonly-box">
+                                            <p class="raw-grade-display">0.00</p>
+                                            <input type="hidden" name="scores[{{ $student->studentID }}][raw_grade]" class="raw-grade-input" value="0.00">
+                                        </div>
+                                    </td>
+                                </tr>
                             @endforeach
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="student-listBtn">
-                    <button type="submit" name="submit">💾 Calculate and Update Scores</button>
-                </div>
+
+                @if($showCalculateButton)
+                    <div class="student-listBtn">
+                        <button type="submit" name="submit">💾 Calculate and Update Scores</button>
+                    </div>
+                @else
+                    <p class="waiting-dean-approval">⏳ Waiting for Dean's Approval</p>
+                @endif
+
             </form>
         </div>
-    </div>
 
-    @endif
     </div>
+    @endif
+</div>
 
 {{-- ================= SCRIPT ================= --}}
 <script>
@@ -201,7 +209,6 @@ document.addEventListener("DOMContentLoaded", function() {
     const studentPeriodInput = document.getElementById("student-periodic-term");
     const studentListHeader = document.querySelector(".student-list");
 
-    // Calculate & update total grades
     function calculateScores(row, data = null) {
         const fields = ["quizzez", "attendance_behavior", "assignments", "exam"];
         let totalGrade = 0;
@@ -213,23 +220,23 @@ document.addEventListener("DOMContentLoaded", function() {
             if (!input || !transDiv || !weightedDiv) return;
 
             let score = parseFloat(input.value) || 0;
-          let trans = score;
-let weighted = 0;
+            let trans = score;
+            let weighted = 0;
 
-if (data && data[field + "_transmuted"] !== undefined) {
-    trans = parseFloat(data[field + "_transmuted"]) || 5.00; // default 5.00
-    weighted = parseFloat(data[field + "_weighted"]) || 0.50; // default 0.50
-} else {
-    const term = studentPeriodInput.value;
-    const percentageInput = document.querySelector(`#gradingForm-${term} input[name='${field.replace('_','')}_percentage']`);
-    const totalScoreInput = document.querySelector(`#gradingForm-${term} input[name='${field.replace('_','')}_total_score']`);
-    const percent = parseFloat(percentageInput?.value) || 0;
-    const maxScore = parseFloat(totalScoreInput?.value) || 0;
+            if (data && data[field + "_transmuted"] !== undefined) {
+                trans = parseFloat(data[field + "_transmuted"]) || 5.00;
+                weighted = parseFloat(data[field + "_weighted"]) || 0.50;
+            } else {
+                const term = studentPeriodInput.value;
+                const percentageInput = document.querySelector(`#gradingForm-${term} input[name='${field.replace('_','')}_percentage']`);
+                const totalScoreInput = document.querySelector(`#gradingForm-${term} input[name='${field.replace('_','')}_total_score']`);
+                const percent = parseFloat(percentageInput?.value) || 0;
+                const maxScore = parseFloat(totalScoreInput?.value) || 0;
 
-    trans = maxScore > 0 ? score : 0;
-    if (trans === 0) trans = 5.00;
-    weighted = percent > 0 && maxScore > 0 ? (trans / maxScore) * percent : 0.50;
-}
+                trans = maxScore > 0 ? score : 0;
+                if (trans === 0) trans = 5.00;
+                weighted = percent > 0 && maxScore > 0 ? (trans / maxScore) * percent : 0.50;
+            }
 
             transDiv.textContent = trans.toFixed(2);
             weightedDiv.textContent = weighted.toFixed(2);
@@ -240,7 +247,6 @@ if (data && data[field + "_transmuted"] !== undefined) {
         if (totalDiv) totalDiv.textContent = totalGrade.toFixed(2);
     }
 
-    // Attach live input listeners
     function attachInputListeners() {
         document.querySelectorAll("#student-scores-body tr").forEach(row => {
             row.querySelectorAll("input.input-box").forEach(input => {
@@ -250,7 +256,6 @@ if (data && data[field + "_transmuted"] !== undefined) {
     }
     attachInputListeners();
 
-    // Fetch and load scores from backend
     function loadScores(term) {
         fetch(`/grading/scores/{{ $class->id }}/${term}`)
             .then(res => res.json())
@@ -270,7 +275,6 @@ if (data && data[field + "_transmuted"] !== undefined) {
             .catch(err => console.error("Error loading scores:", err));
     }
 
-    // Tab click to switch term
     tabs.forEach(tab => {
         tab.addEventListener("click", function() {
             document.querySelectorAll(".grading-form").forEach(form => form.style.display = "none");
@@ -288,10 +292,8 @@ if (data && data[field + "_transmuted"] !== undefined) {
         });
     });
 
-    // Initial load: activate first tab and load its scores
     if (tabs.length > 0) tabs[0].click();
 
-    // Save default grading setup for all terms
     window.saveAllDefaults = function(term) {
         @foreach ($terms as $t)
         (function(targetTerm) {
