@@ -159,17 +159,35 @@ Route::post('/logout', function () {
 | REGISTRAR – FULL CLASS MANAGEMENT
 |--------------------------------------------------------------------------
 */
+// Dashboard
 Route::get('/registrar_dashboard', [RegistrarController::class, 'index'])->name('registrar');
+
+// Classes
 Route::get('/classes', [RegistrarController::class, 'registrar_classes'])->name('registrar_classes');
 Route::post('/classes', [RegistrarController::class, 'CreateClass'])->name('classes.create');
 Route::put('/registrar_dashboard/{class}', [RegistrarController::class, 'EditClass'])->name('classes.update');
 Route::delete('/registrar_dashboard/{class}', [RegistrarController::class, 'DeleteClass'])->name('classes.destroy');
+
+// Class Details
 Route::get('/classes/{class}', [RegistrarController::class, 'show'])->name('class.show');
+
+// Add student
 Route::post('/classes/class={class}', [RegistrarController::class, 'addstudent'])->name('class.addstudent');
-Route::delete('/classes/class={class}/student={student}', [RegistrarController::class, 'removestudent'])->name('class.removestudent');
+
+// Remove single student
+Route::post('/classes/{class}/remove/{student}', [RegistrarController::class, 'removestudent'])->name('class.remove');
+
+// Bulk remove
+Route::post('/classes/{class}/bulk-remove', [RegistrarController::class, 'bulkRemoveStudents'])->name('class.bulkRemove');
+
+// Additional routes for percentages, quizzes, editing
 Route::put('/classes/class={class}', [RegistrarController::class, 'addPercentageAndScores'])->name('class.addPercentageAndScores');
 Route::get('/quizzesadded/class={class}', [RegistrarController::class, 'show'])->name('class.quizzes');
 Route::put('/quizzesadded/class={class}', [RegistrarController::class, 'addQuizAndScore'])->name('class.addquizandscore');
+Route::post('/classes/edit/{class}', [RegistrarController::class, 'EditClass'])->name('classes.edit');
+Route::post('/classes/delete/{class}', [RegistrarController::class, 'DeleteClass'])->name('class.delete');
+
+
 
 Route::get('/grading_view/{id}/{academic_period}', [RegistrarController::class, 'showGrading'])->name('instructor.grading_view');
 Route::get('/student&grades_view/{id}/{academic_period}', [RegistrarController::class, 'studentGradesView'])->name('instructor.student&grades_view');
@@ -204,3 +222,9 @@ Route::post('/registrar/decision',
 // Submit to Registrar Button Route
 Route::post('/registrar-submit-grades', [RegistrarController::class, 'submitToRegistrar'])
     ->name('registrar_submit_grades');
+
+
+     // for pdf
+    Route::get('/generate-pdf', [PDFController::class, 'generatePDF']);
+
+    Route::post('/instructor/generate-gradesheet-pdf', [ClassArchiveController::class, 'generateGradeSheetPDF'])->name('instructor.generate_gradesheet_pdf');

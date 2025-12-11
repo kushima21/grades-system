@@ -483,6 +483,36 @@ public function importCSV(Request $request, $class)
         ->with("error", "Student not found or already removed.");
 }
 
+public function bulkRemoveStudents(Request $request, $class)
+{
+    $studentIDs = $request->input('selected_students', []);
+
+    if (empty($studentIDs)) {
+        return redirect()->route("class.show", $class)
+            ->with("error", "No students selected for deletion.");
+    }
+
+    foreach ($studentIDs as $studentID) {
+
+        // Delete from classes_student
+        Classes_Student::where('classID', $class)
+            ->where('studentID', $studentID)
+            ->delete();
+
+        // Delete quizzes & scores
+        QuizzesAndScores::where('classID', $class)
+            ->where('studentID', $studentID)
+            ->delete();
+
+        // Delete final grade
+        FinalGrade::where('classID', $class)
+            ->where('studentID', $studentID)
+            ->delete();
+    }
+
+    return redirect()->route("class.show", $class)
+        ->with("success", count($studentIDs) . " student(s) removed successfully.");
+}
 
 
 public function addPercentageAndScores(Request $request, $class)

@@ -36,6 +36,8 @@
                         <span>Schedule: {{ $class->schedule }}</span>
                         <br>
                         <span>Status: {{ $class->status }}</span>
+                        <br>
+                        <span>{{ $class->department }}</span>
                     </div>
                     <div class="bottom-c">
                         <span>Instructor: {{ $class->instructor }}</span>

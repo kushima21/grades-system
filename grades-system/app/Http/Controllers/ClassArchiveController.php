@@ -47,7 +47,7 @@ class ClassArchiveController extends Controller
             $query->where('academic_year', $request->academic_year);
         }
 
-        if ($request->has('subject_code') && $request->subject_code != '') {
+        if ($request->has('course_no') && $request->course_no != '') {
             $query->where('course_no', 'LIKE', '%' . $request->course_no . '%');
         }
 
@@ -88,7 +88,7 @@ class ClassArchiveController extends Controller
             });
 
         $finalGrades = ArchivedFinalGrade::all()->groupBy(function ($item) {
-            return $item->academic_year . '|' . $item->academic_period . '|' . $item->subject_code . '|' . $item->instructor . '|' . $item->descriptive_title . '|' . $item->studentID;
+            return $item->academic_year . '|' . $item->academic_period . '|' . $item->course_no . '|' . $item->instructor . '|' . $item->descriptive_title . '|' . $item->studentID;
         });
 
         return view('instructor.my_class_archive', compact('archivedData', 'uniqueInstructors', 'finalGrades'));

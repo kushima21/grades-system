@@ -80,14 +80,6 @@
                             </div>
                          @endif
 
-
-
-                            <div class="manage-links">
-                                <a href="#">
-                                    <span>Student List</span>
-                                </a>
-                            </div>
-
                             <div class="manage-links">
                                 <a href="{{ route('instructor.grading&score') }}">
                                     <span>Grading & Scores</span>
@@ -117,6 +109,14 @@
                                     <span>My Class Archived</span>
                                 </a>
                             </div>
+
+                             <div class="manage-links">
+                                <a href="#">
+                                    <span>Student Grades Archived</span>
+                                </a>
+                            </div>
+
+
                              @if (Auth::check() && str_contains(Auth::user()->role, 'admin'))
                             <span class="manageHeader">Settings</span>
 

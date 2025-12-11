@@ -15,19 +15,6 @@
         <span>Classes Details</span>
     </div>
 
-    {{-- Class Info --}}
-    <h2 class="my-header">{{ $classes->course_no }}</h2>
-    <span class="class-header">{{ $classes->descriptive_title }}</span>
-
-    <div class="cv-subheader">
-        <p class="cv-h">Academic Year: {{ $classes->academic_year }}</p>
-        <p class="cv-h">Academic Period: {{ $classes->academic_period }}</p>
-    </div>
-    <div class="cv-subheader">
-        <p class="cv-h">Instructor: {{ $classes->instructor }}</p>
-        <p class="cv-h">Schedule: {{ $classes->schedule }}</p>
-    </div>
-
     {{-- Add Student Modal --}}
     <div class="add-student-modal-container" id="addStudentModal">
         <h3 class="add-header">Add Student</h3>
@@ -50,8 +37,8 @@
                 @csrf
                 <div class="info-add">
                     <label for="studentSearch">Find Student</label>
-                    <input type="text" id="studentSearch" class="form-control" oninput="filterStudents()" placeholder="Search for a student...">
                     <div id="studentDropdown" class="dropdown-menu"></div>
+                    <input type="text" id="studentSearch" class="form-control" oninput="filterStudents()" placeholder="Search for a student...">
                 </div>
 
                 <div class="info-add">
@@ -76,11 +63,26 @@
                 </div>
 
                 <div class="add-studentBtn">
-                    <button type="submit" name="submit"><i class="fa-solid fa-file-arrow-up"></i> Add Student</button>
+                    <button type="submit" name="submit">
+                        <i class="fa-solid fa-file-arrow-up"></i> Add Student
+                    </button>
                     <button type="button" onclick="closeAddStudentModal()">Cancel</button>
                 </div>
             </form>
         </div>
+    </div>
+
+    {{-- Class Info --}}
+    <h2 class="my-header">{{ $classes->course_no }}</h2>
+    <span class="class-header">{{ $classes->descriptive_title }}</span>
+
+    <div class="cv-subheader">
+        <p class="cv-h">Academic Year: {{ $classes->academic_year }}</p>
+        <p class="cv-h">Academic Period: {{ $classes->academic_period }}</p>
+    </div>
+    <div class="cv-subheader">
+        <p class="cv-h">Instructor: {{ $classes->instructor }}</p>
+        <p class="cv-h">Schedule: {{ $classes->schedule }}</p>
     </div>
 
     {{-- Search Box --}}
@@ -98,32 +100,77 @@
             </span>
         </div>
 
+        {{-- Student Table --}}
         @if(!$hasLockedAndSubmitted)
-            <div class="student-wrapper">
-                <table class="student-table-container">
-                    <thead>
-                        <tr>
-                            <th>Student ID</th>
-                            <th>Name</th>
-                            <th>Gender</th>
-                            <th>Email</th>
-                            <th>Department</th>
-                        </tr>
-                    </thead>
-                    @foreach ($classes_student as $classes_students)
-                        <tbody>
-                            <tr>
-                                <td>{{ $classes_students->studentID }}</td>
-                                <td>{{ $classes_students->name }}</td>
-                                <td>{{ $classes_students->gender }}</td>
-                                <td>{{ $classes_students->email }}</td>
-                                <td>{{ $classes_students->department }}</td>
-                            </tr>
-                        </tbody>
-                    @endforeach
-                </table>
-            </div>
+     <div class="student-wrapper">
+    <table class="student-table-container">
+        <thead>
+            <tr>
+                <th>
+                    <input type="checkbox" id="select-all">
+                    Select All
+                </th>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Gender</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach ($classes_student as $classes_students)
+                <tr>
+                    <td>
+                        <input type="checkbox" class="student-checkbox" 
+                               name="selected_students[]" 
+                               value="{{ $classes_students->studentID }}">
+                    </td>
+
+                    <td>{{ $classes_students->studentID }}</td>
+                    <td>{{ $classes_students->name }}</td>
+                    <td>{{ $classes_students->gender }}</td>
+                    <td>{{ $classes_students->email }}</td>
+                    <td>{{ $classes_students->department }}</td>
+
+                    <td>
+                        <i class="fa-solid fa-trash delete-single"
+                           style="cursor:pointer; color:red;"
+                           data-remove-url="{{ route('class.remove', [$classes->id, $classes_students->studentID]) }}">
+                        </i>
+                    </td>
+                </tr>
+            @endforeach
+
+            {{-- Bulk Delete Form --}}
+            <form id="bulk-delete-form" method="POST" 
+                  action="{{ route('class.bulkRemove', $classes->id) }}" 
+                  style="display:none;">
+                @csrf
+                <tr id="bulk-delete-row" style="display: none;">
+                    <td colspan="7" style="text-align:right;">
+                        <i class="fa-solid fa-trash delete-selected" 
+                           style="cursor:pointer; color:red;"
+                           data-bulk-url="{{ route('class.bulkRemove', $classes->id) }}">
+                        </i> 
+                        Delete Selected
+                    </td>
+                </tr>
+            </form>
+
+        </tbody>
+    </table>
+</div>
+
+{{-- SINGLE DELETE FORM — IMPORTANT: OUTSIDE LOOP, ONLY ONE --}}
+<form id="single-delete-form" method="POST" style="display:none;">
+    @csrf
+    @method('POST')
+</form>
+
         @endif
+
     </div>
 
     {{-- Student Grades --}}
@@ -147,16 +194,11 @@
                 $allLocked = $deptGrades->every(fn($g) => $g->status === 'Locked');
                 $allSubmitted = $deptGrades->every(fn($g) => $g->submit_status === 'Submitted');
                 $showGradesTable = $allLocked && $allSubmitted;
-
                 $pendingDeptApproval = $deptGrades->filter(fn($g) => is_null($g->dean_status) || $g->dean_status === 'Rejected')->count() > 0;
                 $showDeanButtons = $isDean && $pendingDeptApproval;
-
                 $hasRegistrarActionable = $deptGrades->filter(fn($g) => is_null($g->registrar_status))->isNotEmpty();
                 $showRegistrarSubmit = $isDean && $sameDept && $showGradesTable && $hasRegistrarActionable;
-
                 $firstGrade = $deptGrades->first();
-
-                // Department Colors
                 $deptColor = match($dept) {
                     'Bachelor of Science in Computer Science' => 'green',
                     'Bachelor of Science in Business Administration' => 'rgb(238, 191, 0)',
@@ -166,7 +208,6 @@
                     'Bachelor of Science in Social Work' => '#FF7F7F',
                     default => 'black'
                 };
-
                 $hasPendingRegistrar = $deptGrades->contains(fn($g) => $g->registrar_status === 'Pending');
                 $showRegistrarDecision = $isRegistrar && $hasPendingRegistrar;
             @endphp
@@ -261,12 +302,8 @@
                     <h3 class="r-d-header">Registrar Decision for {{ $dept }}</h3>
                     <form method="POST" action="{{ route('registrar.decision') }}">
                         @csrf
-
-                        {{-- Hidden fields --}}
                         <input type="hidden" name="department" value="{{ $dept }}">
                         <input type="hidden" name="classID" value="{{ $classes->id }}">
-
-                        {{-- Grades data if needed for Approved --}}
                         @if($showGradesTable)
                             @foreach($studentsGroup as $student)
                                 <input type="hidden" name="grades[{{ $loop->index }}][studentID]" value="{{ $student->studentID }}">
@@ -279,7 +316,6 @@
                             @endforeach
                         @endif
 
-                        {{-- Registrar Status --}}
                         <label style="margin-right: 15px;">
                             <input type="radio" name="registrar_status" value="Approved" required>
                             Approved
@@ -289,32 +325,12 @@
                             Rejected
                         </label>
 
-                        {{-- Comment box only if Rejected --}}
                         <textarea name="registrar_comment" id="registrar_comment" rows="2" cols="30" placeholder="Provide reason (required if Rejected)" style="display:none;"></textarea>
                         <br>
 
                         <button type="submit" class="registrarDecisionBtn">Submit Decision</button>
                     </form>
                 </div>
-
-                <script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    const radios = document.querySelectorAll('input[name="registrar_status"]');
-                    const commentBox = document.getElementById('registrar_comment');
-
-                    radios.forEach(radio => {
-                        radio.addEventListener('change', () => {
-                            if(radio.value === 'Rejected') {
-                                commentBox.style.display = 'block';
-                                commentBox.required = true;
-                            } else {
-                                commentBox.style.display = 'none';
-                                commentBox.required = false;
-                            }
-                        });
-                    });
-                });
-                </script>
             @endif
 
             <hr style="margin:40px 0;">
@@ -378,17 +394,91 @@ document.addEventListener("click", function (e) {
 });
 </script>
 
-{{-- Registrar Comment Toggle --}}
+{{-- SweetAlert Delete --}}
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const radios = document.querySelectorAll('input[name="registrar_status"]');
-    const commentBox = document.querySelector('textarea[name="registrar_comment"]');
+document.addEventListener('DOMContentLoaded', function () {
 
-    radios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            commentBox.style.display = (radio.value === 'Rejected') ? 'block' : 'none';
+    const selectAll = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('.student-checkbox');
+    const bulkDeleteRow = document.getElementById('bulk-delete-row');
+
+    // Show/Hide bulk delete row
+    function updateBulkDeleteVisibility() {
+        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+        bulkDeleteRow.style.display = anyChecked ? 'table-row' : 'none';
+    }
+
+    selectAll.addEventListener('change', function () {
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        updateBulkDeleteVisibility();
+    });
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateBulkDeleteVisibility);
+    });
+
+    // Bulk Delete
+    const deleteSelected = document.querySelector('.delete-selected');
+    if (deleteSelected) {
+        deleteSelected.addEventListener('click', function () {
+            const selectedIds = Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+
+            if (!selectedIds.length) return;
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to delete ${selectedIds.length} students!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete them!'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    const form = document.getElementById('bulk-delete-form');
+                    form.action = this.dataset.bulkUrl;
+
+                    // Remove old hidden inputs
+                    form.querySelectorAll('input[name="selected_students[]"]').forEach(el => el.remove());
+
+                    selectedIds.forEach(id => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'selected_students[]';
+                        input.value = id;
+                        form.appendChild(input);
+                    });
+
+                    form.submit();
+                }
+            });
+        });
+    }
+
+    // SINGLE DELETE
+    const deleteSingles = document.querySelectorAll('.delete-single');
+
+    deleteSingles.forEach(icon => {
+        icon.addEventListener('click', function () {
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This student will be removed permanently!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete!'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    const form = document.getElementById('single-delete-form');
+                    form.action = this.dataset.removeUrl;
+                    form.submit();
+                }
+            });
+
         });
     });
+
 });
 </script>
 @endsection

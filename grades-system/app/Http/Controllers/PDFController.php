@@ -105,7 +105,7 @@ class PDFController extends Controller
                 // Table Body
                 $pdf->SetFont('helvetica', '', 8);
                 foreach ($grades as $grade) {
-                    $pdf->Cell(40, 7, $grade->subject_code, 1); // Use subject code instead of number
+                    $pdf->Cell(40, 7, $grade->course_no, 1); // Use subject code instead of number
                     $pdf->Cell(94, 7, $grade->descriptive_title, 1);
                     $pdf->Cell(20, 7, number_format($grade->final, 2), 1, 0, 'C');
                     $pdf->Cell(20, 7, "", 1, 0, 'C'); // Re-exam column (empty)

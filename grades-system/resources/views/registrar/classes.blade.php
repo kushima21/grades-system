@@ -2,6 +2,7 @@
 @vite(['resources/css/classes.css', 'resources/js/app.js'])
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @section('content')
     <div class="classes-main-container">
         <div class="span">
@@ -24,8 +25,10 @@
                 Create New Class
             </h2>
             <div class="classes-form-container">
-               <form method="POST" action="{{ route('classes.create') }}">
+               <form id="classForm" method="POST" action="{{ route('classes.create') }}">
                 @csrf
+                 @method('POST')
+                <input type="hidden" name="class_id" id="class_id">
                     <div class="class-wrapper-container">
                        <div class="classes-info">
                             <label for="course_no">Course No: <em>*Example: GEC 001*</em></label>
@@ -139,11 +142,23 @@
                 </div>
 
                 <div class="icon-container">
-                    <span class="icon edit-icon" data-tooltip="Edit">
+                   <span class="icon edit-icon" 
+                        data-tooltip="Edit"
+                        data-id="{{ $class->id }}"
+                        data-course_no="{{ $class->course_no }}"
+                        data-descriptive_title="{{ $class->descriptive_title }}"
+                        data-units="{{ $class->units }}"
+                        data-instructor="{{ $class->instructor }}"
+                        data-academic_year="{{ $class->academic_year }}"
+                        data-academic_period="{{ $class->academic_period }}"
+                        data-schedule="{{ $class->schedule }}"
+                        data-department="{{ $class->department }}"
+                        data-status="{{ $class->status }}">
                         <i class="fa-solid fa-pen-to-square"></i>
                     </span>
 
-                    <span class="icon delete-icon" data-tooltip="Delete">
+
+                   <span class="icon delete-icon" data-tooltip="Delete" data-id="{{ $class->id }}">
                         <i class="fa-solid fa-trash"></i>
                     </span>
 
@@ -163,6 +178,40 @@ document.querySelector('.iconBtbn').addEventListener('click', function() {
     document.getElementById('classesModal').style.display = 'block';
 });
 
+document.getElementById('closeModalBtn').addEventListener('click', function() {
+    document.getElementById('classesModal').style.display = 'none';
+});
+document.querySelectorAll('.edit-icon').forEach(editBtn => {
+    editBtn.addEventListener('click', function () {
+
+        // Open modal
+        document.getElementById('classesModal').style.display = 'block';
+
+        // Change header
+        document.querySelector('.classes-modal-header').innerText = "Edit Class";
+
+        // Change form action to UPDATE route
+        const classId = this.dataset.id;
+        document.getElementById('classForm').action = `/classes/edit/${classId}`;
+        document.getElementById('class_id').value = classId;
+
+        // Fill form inputs
+        document.getElementById('courseInput').value = this.dataset.course_no;
+        document.getElementById('descriptiveTitle').value = this.dataset.descriptive_title;
+        document.getElementById('units').value = this.dataset.units;
+        document.getElementById('instructorInput').value = this.dataset.instructor;
+        document.getElementById('academic_year').value = this.dataset.academic_year;
+        document.getElementById('academic_period').value = this.dataset.academic_period;
+        document.querySelector('input[name="schedule"]').value = this.dataset.schedule;
+        document.getElementById('department').value = this.dataset.department;
+        document.getElementById('status').value = this.dataset.status;
+
+        // Change submit button text
+        document.querySelector('.classes-btn button[type="submit"]').innerText = "Update";
+    });
+});
+
+// Close modal
 document.getElementById('closeModalBtn').addEventListener('click', function() {
     document.getElementById('classesModal').style.display = 'none';
 });
@@ -364,5 +413,42 @@ document.addEventListener('click', function(e){
         });
     }
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const deleteIcons = document.querySelectorAll('.delete-icon');
 
+    deleteIcons.forEach(icon => {
+        icon.addEventListener('click', function () {
+            const classId = this.getAttribute('data-id');
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Create a form dynamically to send POST
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/classes/delete/${classId}`;
+                    
+                    // Add CSRF token
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = '{{ csrf_token() }}';
+                    form.appendChild(csrfInput);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+</script>
 @endsection
