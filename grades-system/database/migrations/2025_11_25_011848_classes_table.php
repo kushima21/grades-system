@@ -21,7 +21,7 @@ return new class extends Migration
                 $table->string('academic_period');
                 $table->string('academic_year');
                 $table->string('schedule');
-                $table->string('department');
+                $table->string('program');
                 $table->string('status');
                 $table->string('added_by');
                 $table->timestamps();

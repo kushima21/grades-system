@@ -228,3 +228,21 @@ Route::post('/registrar-submit-grades', [RegistrarController::class, 'submitToRe
     Route::get('/generate-pdf', [PDFController::class, 'generatePDF']);
 
     Route::post('/instructor/generate-gradesheet-pdf', [ClassArchiveController::class, 'generateGradeSheetPDF'])->name('instructor.generate_gradesheet_pdf');
+
+
+
+     Route::delete('/admin/archived_quiz/{id}', function ($id) {
+        DB::table('archived_quizzesandscores')->where('id', $id)->delete();
+        return back()->with('success', 'Archived quiz/score deleted.');
+    })->name('admin.delete_archived_quiz');
+
+    Route::delete('/admin/archived_final_grade/{id}', function ($id) {
+        DB::table('archived_final_grades')->where('id', $id)->delete();
+        return back()->with('success', 'Archived final grade deleted.');
+    })->name('admin.delete_archived_final_grade');
+
+
+        // for pdf
+    Route::get('/generate-pdf', [PDFController::class, 'generatePDF']);
+
+    Route::post('/instructor/generate-gradesheet-pdf', [ClassArchiveController::class, 'generateGradeSheetPDF'])->name('instructor.generate_gradesheet_pdf');

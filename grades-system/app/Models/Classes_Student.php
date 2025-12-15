@@ -15,6 +15,7 @@ class Classes_Student extends Model
         'name',
         'gender',
         'email',
+        'program',
         'deparment',
     ];
 }

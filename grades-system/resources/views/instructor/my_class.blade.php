@@ -37,7 +37,7 @@
                         <br>
                         <span>Status: {{ $class->status }}</span>
                         <br>
-                        <span>{{ $class->department }}</span>
+                        <span>{{ $class->program }}</span>
                     </div>
                     <div class="bottom-c">
                         <span>Instructor: {{ $class->instructor }}</span>

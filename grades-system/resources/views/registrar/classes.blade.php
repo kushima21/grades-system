@@ -77,12 +77,12 @@
                         </div>
                         
                         <div class="classes-info">
-                            <label for="schedule">Department: 
+                            <label for="schedule">Program: 
                                 <em>*Example: BSCS, BEED, BSBA*</em>
                             </label>
 
                             <!-- Display selected departments -->
-                            <input type="text" name="department" id="department" placeholder="Enter Departments" required>
+                            <input type="text" name="program" id="program" placeholder="Enter Program" required>
                         </div>
                          <input type="hidden" name="added_by" value="{{ Auth::user()->name ?? 'Test User' }}">
 

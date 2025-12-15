@@ -26,6 +26,7 @@ return new class extends Migration
                 $table->string('name')->nullable();
                 $table->string('gender')->nullable();
                 $table->string('email')->nullable();
+                $table->string('program')->nullable();
                 $table->string('department');
                 $table->decimal('prelim', 5,2);
                 $table->decimal('midterm', 5,2);

@@ -1,164 +1,173 @@
 @extends('layouts.default')
 @vite(['resources/css/my_class_archive.css', 'resources/js/app.js'])
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
-@section('content')
 
-    <div class="my-class-archived-main-container">
-        <div class="span">
-            <span>Admin</span>
-            <span>></span>
-            <span>Manage</span>
-            <span>></span>
-            <span>My Class Archived</span>
-        </div>
-        <div class="grade-archive-view">
-            <div class="a-header-close">
-                 <h2 class="archive-view-header">
-                CS 10
-                </h2>
+@section('content')
+<div class="my-class-archived-main-container">
+
+    <div class="breadcrumb">
+        <span>Admin</span> <span>></span> <span>Manage</span> <span>></span> <span>My Class Archived</span>
+    </div>
+
+    {{-- Grade Archive View --}}
+    <div class="grade-archive-view" id="gradeArchiveView">
+        <div class="a-header-close">
+            <h2 class="archive-view-header">CS 10</h2>
             <span class="close-icon" id="closeGradeView">✖</span>
-            </div>
-            <h3 class="archive-view-subheader">
-                Programming 1
-            </h3>
-            <div class="acad-details">
-                <span class="instructor-label">Instructor:</span>
-                <span class="instructor-value">John Mark Hondrada</span>
-                <span class="schedule-label">Schedule:</span>
-                <span class="schedule-value">Mon, Wed, Fri - 10:00 AM to 11:00 AM</span>
-            </div>
-            <div class="acad-container">
-                <span class="acad-year-label">Academic Year:</span>
-                <span class="acad-year-value">2025-2026</span>
-                <span class="acad-period-label">Academic Period:</span>
-                <span class="acad-period-value">Second Semester</span>
-            </div>
-            <div class="Grades">
-                <h3 class="grades-header">
-                    Grades
-                </h3>
-            </div>
-            <div class="raw-columnBtn">
-                <button type="button" class="rawBtn">
-                    Show Raw Column
-                </button>
-            </div>
-            <h3 class="department-header">
-                Bachelor of Science in Computer Science
-            </h3>
-            <div class="search-student-archive">
-                <input type="text" class="searchStudetn" name="searcHStudent" placeholder="Search Student...">
-            </div>
-            <div class="grades-wrapper-container">
-                <table class="grades-table-container">
-                    <thead>
-                        <tr>
-                            <th class="student-name-header">Student Name</th>
-                            <th class="prelim-header">Prelim</th>
-                            <th class="midraw-header">Midterm (Raw)</th>
-                            <th class="midterm-header">Midterm</th>
-                            <th class="midraw-header">Semi-Final (Raw)</th>
-                            <th class="midraw-header">Semi Final</th>
-                            <th class="finals-header">Final (Raw)</th>
-                            <th class="final-grade-header">Finals</th>
-                            <th class="remarks-header">Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="student-name-cell">Alice Johnson</td>
-                            <td class="prelim-cell">88</td>
-                            <td class="prelim-cell">88</td>
-                            <td class="prelim-cell">88</td>
-                            <td class="prelim-cell">88</td>
-                            <td class="midterm-cell">92</td>
-                            <td class="finals-cell">85</td>
-                            <td class="final-grade-cell">88.33</td>
-                            <td class="remarks-cell">Passed</td>
-                        </tr>
-                        <tr>
-                            <td class="student-name-cell">Bob Smith</td>
-                            <td class="prelim-cell">76</td>
-                            <td class="prelim-cell">76</td>
-                            <td class="prelim-cell">76</td>
-                            <td class="prelim-cell">76</td>
-                            <td class="midterm-cell">81</td>
-                            <td class="finals-cell">79</td>
-                            <td class="final-grade-cell">78.67</td>
-                            <td class="remarks-cell">Passed</td>
-                        </tr>
-                        <tr>
-                            <td class="student-name-cell">Catherine Lee</td>
-                            <td class="prelim-cell">90</td>
-                            <td class="prelim-cell">90</td>
-                            <td class="prelim-cell">90</td>
-                            <td class="prelim-cell">90</td>
-                            <td class="midterm-cell">94</td>
-                            <td class="finals-cell">91</td>
-                            <td class="final-grade-cell">91.67</td>
-                            <td class="remarks-cell">Passed</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
         </div>
-        <h2 class="my-header">
-            My Class Archived
-        </h2>
-        <div class="archive-folder-main-container">
-            <div class="archive-folder-box">
-                📁 Academic Year
-            </div>
-                <div class="year-box">
-                    📁 2025-2026
-                </div>
-                    <div class="semester-box">
-                        📁 First Semester
-                    </div>
-                    <div class="subject-box">
-                        📁 Mathematics 101
-                    </div>
+        <h3 class="archive-view-subheader">Programming 1</h3>
+
+        <div class="acad-details">
+            <span class="instructor-label">Instructor:</span>
+            <span class="instructor-value"></span>
+            <span class="schedule-label">Schedule:</span>
+            <span class="schedule-value"></span>
+        </div>
+
+        <div class="acad-container">
+            <span class="acad-year-label">Academic Year:</span>
+            <span class="acad-year-value"></span>
+            <span class="acad-period-label">Academic Period:</span>
+            <span class="acad-period-value"></span>
+        </div>
+
+        <div class="grades-wrapper-container">
+            <h3 class="grades-header">Final Grades</h3>
+            <table class="grades-table-container">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Prelim</th>
+                        <th>Midterm</th>
+                        <th>Semi-Finals</th>
+                        <th>Final</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody id="grades-table-body"></tbody>
+            </table>
         </div>
     </div>
+
+    {{-- Archive Folder --}}
+    <h2 class="my-header">My Class Archived</h2>
+    <div class="class-archive-container">
+  @foreach ($archivedData as $academic_year => $periodGroups)
+    <div class="folder" onclick="toggleFolder('year-{{ $academic_year }}')">
+        📁 Academic Year: {{ $academic_year }}
+    </div>
+    <div class="folder-content" id="year-{{ $academic_year }}">
+        @foreach ($periodGroups as $academic_period => $classGroups)
+            <div class="folder period-folder" onclick="toggleFolder('period-{{ $academic_year }}-{{ $academic_period }}')">
+                📂 Academic Period: {{ $academic_period }}
+            </div>
+            <div class="folder-content" id="period-{{ $academic_year }}-{{ $academic_period }}">
+                @foreach ($classGroups as $classID => $instructorGroups)
+              @php
+                    // Get the first student record in finalGrades for this classID
+                    $scheduleKeyPrefix = $academic_year . '|' . $academic_period . '|' . $classID;
+                    $scheduleRecord = collect($finalGrades)
+                        ->filter(fn($grades, $key) => str_starts_with($key, $scheduleKeyPrefix))
+                        ->first();
+
+                    if ($scheduleRecord && count($scheduleRecord) > 0) {
+                        $firstGrade = $scheduleRecord[0];
+                        $course_no = $firstGrade->course_no ?? 'N/A';
+                        $program = $firstGrade->program ?? 'N/A';
+                    } else {
+                        $course_no = 'N/A';
+                        $program = 'N/A';
+                    }
+                @endphp
+                    <div class="folder subject-folder" onclick="toggleFolder('class-{{ $classID }}')">
+                       📂 Course No: {{ $course_no }} / {{ $program }}
+                    </div>
+                    <div class="folder-content" id="class-{{ $classID }}">
+                        @foreach ($instructorGroups as $instructor => $titleGroups)
+                            <h4 class="i-header">Instructor: {{ $instructor }}</h4>
+                            @foreach ($titleGroups as $descriptive_title => $termGroups)
+                                <h5 class="d-header">Descriptive Title: {{ $descriptive_title }}</h5>
+                                @php
+                                    // Include classID in the scheduleKey for alignment
+                                    $scheduleKey = $academic_year . '|' . $academic_period . '|' . $classID . '|' . $instructor . '|' . $descriptive_title;
+                                    $scheduleRecord = collect($finalGrades)
+                                        ->filter(fn($records, $key) => str_starts_with($key, $scheduleKey))
+                                        ->first();
+                                    $schedule = $scheduleRecord ? $scheduleRecord[0]->schedule : 'N/A';
+                                @endphp
+                                <h5 class="s-header">Schedule: {{ $schedule }}</h5>
+
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Student ID</th>
+                                                <th>Name</th>
+                                                <th>Prelim</th>
+                                                <th>Midterm</th>
+                                                <th>Semi-Finals</th>
+                                                <th>Final</th>
+                                                <th>Remarks</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($finalGrades as $key => $grades)
+                                                @if (str_starts_with($key, $scheduleKey))
+                                                    @php $finalGrade = $grades[0]; @endphp
+                                                    <tr>
+                                                        <td>{{ $finalGrade->studentID }}</td>
+                                                        <td>{{ $finalGrade->name }}</td>
+                                                        <td>{{ $finalGrade->prelim }}</td>
+                                                        <td>{{ $finalGrade->midterm }}</td>
+                                                        <td>{{ $finalGrade->semi_finals }}</td>
+                                                        <td>{{ $finalGrade->final }}</td>
+                                                        <td>{{ $finalGrade->remarks }}</td>
+                                                    </tr>
+                                                @endif
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+
+                                    <form method="POST" action="{{ route('instructor.generate_gradesheet_pdf') }}" target="_blank" class="generateGrade">
+                                        @csrf
+                                        <input type="hidden" name="academic_year" value="{{ $academic_year }}">
+                                        <input type="hidden" name="academic_period" value="{{ $academic_period }}">
+                                        <input type="hidden" name="subject_code" value="{{ $course_no }}">
+                                        <input type="hidden" name="course_no" value="{{ $course_no }}">
+                                        <input type="hidden" name="classID" value="{{ $classID }}">
+                                        <input type="hidden" name="program" value="{{ $program }}"> {{-- ✅ send program --}}
+                                        <input type="hidden" name="instructor" value="{{ $instructor }}">
+                                        <input type="hidden" name="descriptive_title" value="{{ $descriptive_title }}">
+                                        <button type="submit" class="gBtn"><i class="fa-solid fa-file-pdf"></i> Generate PDF</button>
+                                    </form>
+                                </div>
+                            @endforeach
+                        @endforeach
+                    </div>
+                @endforeach
+            </div>
+        @endforeach
+    </div>
+@endforeach
+
+
+
+    </div>
+
+</div>
+
 <script>
-    // Get elements
-    const academicYearBox = document.querySelector('.archive-folder-box');
-    const yearBox = document.querySelector('.year-box');
-    const semesterBox = document.querySelector('.semester-box');
-    const subjectBox = document.querySelector('.subject-box');
-    const gradeArchiveView = document.querySelector('.grade-archive-view');
-    const closeGradeView = document.getElementById('closeGradeView');
+function toggleFolder(id) {
+    const content = document.getElementById(id);
+    content.style.display = content.style.display === 'block' ? 'none' : 'block';
+}
 
-    // Step 1: Click Academic Year → Show Year Box
-    academicYearBox.addEventListener('click', () => {
-        yearBox.style.display = yearBox.style.display === 'block' ? 'none' : 'block';
-        semesterBox.style.display = 'none';
-        subjectBox.style.display = 'none';
-        gradeArchiveView.style.display = 'none';
-    });
-
-    // Step 2: Click Year Box → Show Semester Box
-    yearBox.addEventListener('click', () => {
-        semesterBox.style.display = semesterBox.style.display === 'block' ? 'none' : 'block';
-        subjectBox.style.display = 'none';
-        gradeArchiveView.style.display = 'none';
-    });
-
-    // Step 3: Click Semester Box → Show Subject Box
-    semesterBox.addEventListener('click', () => {
-        subjectBox.style.display = subjectBox.style.display === 'block' ? 'none' : 'block';
-        gradeArchiveView.style.display = 'none';
-    });
-
-    // Step 4: Click Subject Box → Show Grade Archive View
-    subjectBox.addEventListener('click', () => {
-        gradeArchiveView.style.display = gradeArchiveView.style.display === 'block' ? 'none' : 'block';
-    });
-
-    // Step 5: Close icon to hide grade archive view
-    closeGradeView.addEventListener('click', () => {
-        gradeArchiveView.style.display = 'none';
-    });
+// Close grade view
+const gradeArchiveView = document.getElementById('gradeArchiveView');
+const closeGradeView = document.getElementById('closeGradeView');
+if (closeGradeView) {
+    closeGradeView.addEventListener('click', () => gradeArchiveView.style.display = 'none');
+}
 </script>
 @endsection

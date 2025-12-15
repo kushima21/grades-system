@@ -35,6 +35,8 @@
         <div class="class-view-form-container">
             <form method="POST" action="{{ route('class.addstudent', $classes->id) }}">
                 @csrf
+                <input type="hidden" name="program" value="{{ $classes->program }}">
+
                 <div class="info-add">
                     <label for="studentSearch">Find Student</label>
                     <div id="studentDropdown" class="dropdown-menu"></div>
@@ -115,7 +117,6 @@
                 <th>Gender</th>
                 <th>Email</th>
                 <th>Department</th>
-                <th>Action</th>
             </tr>
         </thead>
 
@@ -187,30 +188,81 @@
             $isRegistrar = in_array('registrar', $userRoles);
         @endphp
 
-        @foreach($groupedByDepartment as $dept => $studentsGroup)
-            @php
-                $sameDept = strtolower(trim($user->department)) === strtolower(trim($dept));
-                $deptGrades = $finalGrades->whereIn('studentID', $studentsGroup->pluck('studentID')->map(fn($id) => (string)$id)->toArray());
-                $allLocked = $deptGrades->every(fn($g) => $g->status === 'Locked');
-                $allSubmitted = $deptGrades->every(fn($g) => $g->submit_status === 'Submitted');
-                $showGradesTable = $allLocked && $allSubmitted;
-                $pendingDeptApproval = $deptGrades->filter(fn($g) => is_null($g->dean_status) || $g->dean_status === 'Rejected')->count() > 0;
-                $showDeanButtons = $isDean && $pendingDeptApproval;
-                $hasRegistrarActionable = $deptGrades->filter(fn($g) => is_null($g->registrar_status))->isNotEmpty();
-                $showRegistrarSubmit = $isDean && $sameDept && $showGradesTable && $hasRegistrarActionable;
-                $firstGrade = $deptGrades->first();
-                $deptColor = match($dept) {
-                    'Bachelor of Science in Computer Science' => 'green',
-                    'Bachelor of Science in Business Administration' => 'rgb(238, 191, 0)',
-                    'Bachelor of Arts in English Language Studies' => 'red',
-                    'Bachelor of Science in Education' => 'blue',
-                    'Bachelor of Science in Criminology' => 'violet',
-                    'Bachelor of Science in Social Work' => '#FF7F7F',
-                    default => 'black'
-                };
-                $hasPendingRegistrar = $deptGrades->contains(fn($g) => $g->registrar_status === 'Pending');
-                $showRegistrarDecision = $isRegistrar && $hasPendingRegistrar;
-            @endphp
+       @foreach($groupedByDepartment as $dept => $studentsGroup)
+@php
+    // 🔹 Education-related departments grouped
+    $educationGroups = [
+        'Bachelor of Science in Education',
+        'Bachelor of Elementary Education',
+        'Bachelor of Secondary Education',
+        'Education Major in Math',
+        'Education Major in English',
+        'BEED',
+        'BSED',
+    ];
+
+    // 🔹 Normalize department: merge all education groups into "Education"
+    $normalizedDept = in_array($dept, $educationGroups) ? 'Education' : $dept;
+
+    // 🔹 Department colors
+    $deptColors = [
+        'Bachelor of Science in Computer Science' => 'green',
+        'Bachelor of Science in Business Administration' => 'rgb(238, 191, 0)',
+        'Bachelor of Arts in English Language Studies' => 'red',
+        'Bachelor of Science in Education' => 'blue',
+        'Bachelor of Science in Criminology' => 'violet',
+        'Bachelor of Science in Social Work' => '#FF7F7F',
+        'Education' => 'blue', // All Education grouped under blue
+    ];
+
+    // 🔹 Get color for this department
+    $deptColor = $deptColors[$normalizedDept] ?? 'black';
+
+    // 🔹 Determine if logged-in user is a dean of Education or the exact department
+    $isDeanEducation = in_array($user->department, $educationGroups);
+    $sameDept = strtolower($user->department) === strtolower($normalizedDept)
+                || ($isDeanEducation && $normalizedDept === 'Education');
+
+    // 🔹 Get grades for this department
+    $deptGrades = $finalGrades->whereIn(
+        'studentID',
+        $studentsGroup->pluck('studentID')->map(fn($id) => (string)$id)->toArray()
+    );
+
+    // 🔹 If this is Education, include all related departments for submission
+    $departmentsToSubmit = ($normalizedDept === 'Education') ? $educationGroups : [$normalizedDept];
+
+    // 🔹 Check if all grades are locked and submitted
+    $allLocked = $deptGrades->every(fn($g) => $g->status === 'Locked');
+    $allSubmitted = $deptGrades->every(fn($g) => $g->submit_status === 'Submitted');
+    $showGradesTable = $allLocked && $allSubmitted;
+
+    // 🔹 Check if dean approval has been given for all
+    $allDeanApproved = $deptGrades->every(fn($g) => $g->dean_status === 'Confirmed');
+
+    // 🔹 Check if any grades still need registrar action (Pending)
+    $hasRegistrarActionable = $deptGrades->contains(fn($g) => is_null($g->registrar_status));
+
+    // 🔹 Show "Submit to Registrar" button if dean belongs to this department (or Education group) and all approvals are done
+    $showRegistrarSubmit = $isDean && $sameDept && $showGradesTable && $allDeanApproved && $hasRegistrarActionable;
+
+    // 🔹 Dean buttons: visible if dean, same department, and pending approval exists
+    $pendingDeptApproval = $deptGrades
+        ->filter(fn($g) => is_null($g->dean_status) || $g->dean_status === 'Rejected')
+        ->count() > 0;
+    $showDeanButtons = $isDean && $sameDept && $pendingDeptApproval;
+
+    // 🔹 Registrar view: visible if registrar role and there are pending grades
+    $hasPendingRegistrar = $deptGrades->contains(fn($g) => $g->registrar_status === 'Pending');
+    $showRegistrarDecision = $isRegistrar && $hasPendingRegistrar;
+
+    // 🔹 First grade (for status display)
+    $firstGrade = $deptGrades->first();
+@endphp
+
+
+
+
 
             {{-- Department Header --}}
             <div class="student-grades-m-container">
@@ -268,7 +320,7 @@
                 <div class="decisionBtn-container">
                     <form method="POST" action="{{ route('dean.decision') }}">
                         @csrf
-                        <label style="margin-right: 15px;">
+                        <label style="margin-right: 15px; padding-left: 20px;">
                             <input type="checkbox" name="dean_status" value="Confirmed">
                             <span class="decision-span">Confirmed</span>
                         </label>
@@ -286,16 +338,15 @@
                 </div>
             @endif
 
-            {{-- Submit to Registrar --}}
-            @if($showRegistrarSubmit)
-                <form method="POST" action="{{ route('registrar_submit_grades') }}">
-                    @csrf
-                    <input type="hidden" name="department" value="{{ $dept }}">
-                    <input type="hidden" name="classID" value="{{ $classes->id }}">
-                    <button type="submit" class="submitToRegistrarBTn">Submit to Registrar</button>
-                </form>
-            @endif
-
+  {{-- Submit to Registrar --}}
+@if($showRegistrarSubmit)
+    <form method="POST" action="{{ route('registrar_submit_grades') }}">
+        @csrf
+        <input type="hidden" name="department" value="{{ $normalizedDept }}">
+        <input type="hidden" name="classID" value="{{ $classes->id }}">
+        <button type="submit" class="submitToRegistrarBTn">Submit to Registrar</button>
+    </form>
+@endif
             {{-- Registrar Decision --}}
             @if($showRegistrarDecision)
                 <div class="registrar-decision-container">
@@ -316,7 +367,7 @@
                             @endforeach
                         @endif
 
-                        <label style="margin-right: 15px;">
+                        <label style="margin-right: 15px; padding-left: 20px;">
                             <input type="radio" name="registrar_status" value="Approved" required>
                             Approved
                         </label>
@@ -328,7 +379,7 @@
                         <textarea name="registrar_comment" id="registrar_comment" rows="2" cols="30" placeholder="Provide reason (required if Rejected)" style="display:none;"></textarea>
                         <br>
 
-                        <button type="submit" class="registrarDecisionBtn">Submit Decision</button>
+                        <button type="submit" class="registrarDecisionBtn" style="margin-top: 10px; ">Submit Decision</button>
                     </form>
                 </div>
             @endif

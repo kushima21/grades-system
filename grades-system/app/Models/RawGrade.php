@@ -14,7 +14,7 @@ class RawGrade extends Model
 
     protected $fillable = [
         'classID', 'course_no', 'descriptive_title', 'instructor', 'academic_period', 'schedule',
-        'studentID', 'name', 'gender', 'email', 'department',
+        'studentID', 'name', 'gender', 'email','program', 'department',
         'prelim', 'midterm_raw', 'midterm', 'semi_finals_raw', 'semi_finals', 'final_raw', 'final', 'remarks',
     ];
 }

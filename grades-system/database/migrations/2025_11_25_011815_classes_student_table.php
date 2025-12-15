@@ -19,6 +19,7 @@ return new class extends Migration
                 $table->string('name');
                 $table->string('gender')->nullable();
                 $table->string('email');
+                $table->string('program');
                 $table->string('department');
                 $table->timestamps();
             });

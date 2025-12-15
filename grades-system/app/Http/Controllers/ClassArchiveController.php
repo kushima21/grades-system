@@ -23,92 +23,68 @@ class CustomPDF extends TCPDF
 class ClassArchiveController extends Controller
 {
     public function index(Request $request)
-    {
-        $termOrder = ['Prelim', 'Midterm', 'Semi-Finals', 'Finals'];
+{
+    $termOrder = ['Prelim', 'Midterm', 'Semi-Finals', 'Finals'];
 
-        // Get logged-in user
-        $loggedInUser = Auth::user();
-        $loggedInInstructor = $loggedInUser->name;
-        $roles = explode(',', $loggedInUser->role); // Convert roles to an array
+    $loggedInUser = Auth::user();
+    $loggedInInstructor = $loggedInUser->name;
+    $roles = explode(',', $loggedInUser->role);
 
-        // Check if the user is an admin
-        $isAdmin = in_array('admin', $roles);
+    $isAdmin = in_array('admin', $roles);
 
-        // Apply filters
-        $query = ClassArchive::query();
+    $query = ClassArchive::query();
 
-        // If the user is not an admin, filter by instructor
-        if (!$isAdmin) {
-            $query->where('instructor', $loggedInInstructor);
-        }
-
-        // Apply additional filters based on the request
-        if ($request->has('academic_year') && $request->academic_year != '') {
-            $query->where('academic_year', $request->academic_year);
-        }
-
-        if ($request->has('course_no') && $request->course_no != '') {
-            $query->where('course_no', 'LIKE', '%' . $request->course_no . '%');
-        }
-
-        $records = $query->orderBy('academic_year', 'desc')
-            ->orderBy('academic_period')
-            ->orderBy('descriptive_title')
-            ->orderBy('course_no')
-            ->get();
-
-        // Get unique instructors for the dropdown
-        $uniqueInstructors = ClassArchive::selectRaw('DISTINCT TRIM(LOWER(instructor)) as instructor')
-            ->orderBy('instructor')
-            ->pluck('instructor')
-            ->map(fn($name) => ucwords($name)) // Capitalize first letter of each word
-            ->unique()
-            ->values();
-
-        // Group the data
-        // Group the data correctly
-        $archivedData = $records->groupBy('academic_year')
-            ->map(function ($yearGroup) use ($termOrder) {
-                return $yearGroup->groupBy('academic_period')
-                    ->map(function ($periodGroup) use ($termOrder) {
-                        return $periodGroup->groupBy('course_no') // Subject Code should be grouped here
-                            ->map(function ($subjectGroup) use ($termOrder) {
-                                return $subjectGroup->groupBy('instructor') // Now, group by Instructor
-                                    ->map(function ($instructorGroup) use ($termOrder) {
-                                        return $instructorGroup->groupBy('descriptive_title') // Then by Course Title
-                                            ->map(function ($titleGroup) use ($termOrder) {
-                                                return $titleGroup->groupBy('periodic_term') // Finally, group by Periodic Term
-                                                    ->sortBy(function ($_, $key) use ($termOrder) {
-                                                        return array_search($key, $termOrder);
-                                                    });
-                                            });
-                                    });
-                            });
-                    });
-            });
-
-        $finalGrades = ArchivedFinalGrade::all()->groupBy(function ($item) {
-            return $item->academic_year . '|' . $item->academic_period . '|' . $item->course_no . '|' . $item->instructor . '|' . $item->descriptive_title . '|' . $item->studentID;
-        });
-
-        return view('instructor.my_class_archive', compact('archivedData', 'uniqueInstructors', 'finalGrades'));
+    if (!$isAdmin) {
+        $query->where('instructor', $loggedInInstructor);
     }
 
+    if ($request->filled('academic_year')) {
+        $query->where('academic_year', $request->academic_year);
+    }
 
+    if ($request->filled('course_no')) {
+        $query->where('course_no', 'LIKE', '%' . $request->course_no . '%');
+    }
 
+    $records = $query->orderBy('academic_year', 'desc')
+        ->orderBy('academic_period')
+        ->orderBy('descriptive_title')
+        ->orderBy('course_no')
+        ->get();
 
+    $uniqueInstructors = ClassArchive::selectRaw('DISTINCT TRIM(LOWER(instructor)) as instructor')
+        ->orderBy('instructor')
+        ->pluck('instructor')
+        ->map(fn($name) => ucwords($name))
+        ->unique()
+        ->values();
 
+    // ✅ Group by classID and preserve program
+    $archivedData = $records->groupBy('academic_year')
+        ->map(function ($yearGroup) use ($termOrder) {
+            return $yearGroup->groupBy('academic_period')
+                ->map(function ($periodGroup) use ($termOrder) {
+                    return $periodGroup->groupBy('classID')
+                        ->map(function ($classGroup) use ($termOrder) {
+                            return $classGroup->groupBy('instructor')
+                                ->map(function ($instructorGroup) use ($termOrder) {
+                                    return $instructorGroup->groupBy('descriptive_title')
+                                        ->map(function ($titleGroup) use ($termOrder) {
+                                            return $titleGroup->groupBy('periodic_term')
+                                                ->sortBy(fn($_, $key) => array_search($key, $termOrder));
+                                        });
+                                });
+                        });
+                });
+        });
 
+    // ✅ Include program in finalGrades
+    $finalGrades = ArchivedFinalGrade::all()->groupBy(function ($item) {
+        return $item->academic_year . '|' . $item->academic_period . '|' . $item->classID . '|' . $item->instructor . '|' . $item->descriptive_title . '|' . $item->studentID;
+    });
 
-
-
-
-
-
-
-
-
-
+    return view('instructor.my_class_archive', compact('archivedData', 'uniqueInstructors', 'finalGrades'));
+}
 
 
 
@@ -121,7 +97,7 @@ class ClassArchiveController extends Controller
     {
         $academic_year = $request->academic_year;
         $academic_period = $request->academic_period;
-        $subject_code = $request->subject_code;
+        $course_no = $request->course_no;
         $instructor = $request->instructor;
         $descriptive_title = $request->descriptive_title;
 
@@ -129,7 +105,7 @@ class ClassArchiveController extends Controller
         $finalGrades = \App\Models\ArchivedFinalGrade::where([
             ['academic_year', $academic_year],
             ['academic_period', $academic_period],
-            ['subject_code', $subject_code],
+            ['course_no', $course_no],
             ['instructor', $instructor],
             ['descriptive_title', $descriptive_title],
         ])->orderBy('department')->orderBy('name')->get();
@@ -228,7 +204,7 @@ class ClassArchiveController extends Controller
                     <td><b>Date:</b> ' . date('m/d/Y') . '</td>
                 </tr>
                 <tr>
-                    <td><b>Course Code:</b> ' . $subject_code . '</td>
+                    <td><b>Course Code:</b> ' . $course_no . '</td>
                     <td><b>AY:</b> ' . $academic_year . '</td>
                 </tr>
                 <tr>
@@ -289,7 +265,7 @@ class ClassArchiveController extends Controller
 
                <td style="font-size:10px; ">
                     Approved by: <b style="font-size:9px;">' . strtoupper($approvedBy) . '</b><br>
-                     <table width="100%"><tr><td align="center" style="font-size:9px;">Program Head</td></tr></table>
+                     <table width="100%"><tr><td align="center" style="font-size:9px;">Dean</td></tr></table>
                 </td>
                 <td style="font-size:10px; ">
                     Submitted to:<b style="font-size:9px;"> ' . strtoupper('ELVYN P. SALMERON, MMEM') . '</b> <br>
