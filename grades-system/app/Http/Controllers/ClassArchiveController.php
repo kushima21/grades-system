@@ -160,7 +160,7 @@ class ClassArchiveController extends Controller
         $schedule = $students->first()->schedule ?? '';
 
         // ================= FORCE COLLEGE BY DEPARTMENT =================
-   // ================= FORCE EDUCATION BY ABBREVIATION =================
+  // ================= FORCE COLLEGE BY ABBREVIATION =================
 $educationAbbreviations = [
     'BEED',
     'BSED',
@@ -170,35 +170,43 @@ $educationAbbreviations = [
     'BSED-ENGLISH'
 ];
 
+$bsbaAbbreviations = [
+    'BSBA - FM',
+    'BSBA - OM'
+];
+
 $abbrUpper = strtoupper(trim($abbreviation));
 
 if (in_array($abbrUpper, $educationAbbreviations)) {
-
+    // ================= FORCE EDUCATION =================
     $college    = 'COLLEGE OF EDUCATION';
     $approvedBy = $programHeads['Education'];
     $deptLogo   = $deptLogos['COLLEGE OF EDUCATION'];
 
-}
-// ================= FORCE COLLEGE BY DEPARTMENT =================
-elseif ($department === 'Education') {
+} elseif (in_array($abbrUpper, $bsbaAbbreviations)) {
+    // ================= FORCE BUSINESS ADMINISTRATION =================
+    $college    = 'COLLEGE OF BUSINESS ADMINISTRATION';
+    $approvedBy = $programHeads['Business Administration'];
+    $deptLogo   = $deptLogos['COLLEGE OF BUSINESS ADMINISTRATION'];
 
+} elseif ($department === 'Education') {
+    // ================= FORCE EDUCATION BY DEPARTMENT =================
     $college    = 'COLLEGE OF EDUCATION';
     $approvedBy = $programHeads['Education'];
     $deptLogo   = $deptLogos['COLLEGE OF EDUCATION'];
 
 } elseif ($department === 'Business Administration') {
-
+    // ================= FORCE BUSINESS ADMINISTRATION BY DEPARTMENT =================
     $college    = 'COLLEGE OF BUSINESS ADMINISTRATION';
     $approvedBy = $programHeads['Business Administration'];
     $deptLogo   = $deptLogos['COLLEGE OF BUSINESS ADMINISTRATION'];
 
 } else {
-
+    // ================= DEFAULT =================
     $college    = 'COLLEGE OF ' . strtoupper($department);
     $approvedBy = $programHeads[$department] ?? '___________________________';
     $deptLogo   = $deptLogos[$college] ?? $schoolLogo;
 }
-
 
     $pdf->AddPage();
 
