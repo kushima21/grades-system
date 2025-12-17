@@ -32,8 +32,8 @@ class PDFController extends Controller
     'Bachelor of Secondary Education' => 'BSED',
     'Bachelor of Science in Education' => 'BSEd',
     'Bachelor of Science in Business Administration' => 'BSBA',
-    'Bachelor of Science in Operating Management' => 'BSOM',
-    'Bachelor of Science in Financial Management' => 'BSFM',
+    'Bachelor of Science in Operating Management' => 'BSBA - OM',
+    'Bachelor of Science in Financial Management' => 'BSBA - FM',
     'Bachelor of Science in Computer Science' => 'BSCS',
     // add more as needed
 ];

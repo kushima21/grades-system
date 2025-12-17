@@ -95,16 +95,14 @@ class ClassArchiveController extends Controller
 
     public function generateGradeSheetPDF(Request $request)
 {
-    $academic_year = $request->academic_year;
-    $academic_period = $request->academic_period;
-    $course_no = $request->course_no;
-    $instructor = $request->instructor;
+    $academic_year     = $request->academic_year;
+    $academic_period   = $request->academic_period;
+    $course_no         = $request->course_no;
+    $instructor        = $request->instructor;
     $descriptive_title = $request->descriptive_title;
+    $classID           = $request->classID;
 
-    // Fetch relevant final grades
-    $classID = $request->classID;
-    $program = $request->program;
-
+    // ================= FETCH FINAL GRADES =================
     $finalGrades = \App\Models\ArchivedFinalGrade::where([
         ['academic_year', $academic_year],
         ['academic_period', $academic_period],
@@ -112,92 +110,95 @@ class ClassArchiveController extends Controller
         ['course_no', $course_no],
         ['instructor', $instructor],
         ['descriptive_title', $descriptive_title],
-    ])->orderBy('department')->orderBy('name')->get();
+    ])
+    ->orderBy('department')
+    ->orderBy('abbreviation')
+    ->orderBy('name')
+    ->get();
 
-    // Get schedule from the first record (if exists)
-    $schedule = $finalGrades->first()->schedule ?? '';
+    if ($finalGrades->isEmpty()) {
+        return back()->with('error', 'No records found.');
+    }
 
-    // Group by department
-    $gradesByDept = $finalGrades->groupBy('department');
+    // ================= GROUP BY DEPARTMENT + ABBREVIATION =================
+    $gradesByGroup = $finalGrades->groupBy(function ($item) {
+        return trim($item->department) . '|' . trim($item->abbreviation);
+    });
 
-    // Program Heads mapping
+    // ================= MAPPINGS =================
     $programHeads = [
-        'Computer Science' => 'Marjon D. Senarlo, MSIT',
-        'Business Administration' => 'Arlene N. Bacus, MBA',
-        'Education' => 'Everose C. Toylo, M.Ed.',
-        'Criminology' => 'Jennilyn B. Obena, MSCrim',
-        'English Language Studies' => 'Anacleto S. Dolar Jr., MATE',
-        'Social Work' => 'Sherlita A. Sintos, RSW',
+        'Computer Science'            => 'Marjon D. Senarlo, MSIT',
+        'Business Administration'     => 'Arlene N. Bacus, MBA',
+        'Education'                   => 'Everose C. Toylo, M.Ed.',
+        'Criminology'                 => 'Jennilyn B. Obena, MSCrim',
+        'English Language Studies'    => 'Anacleto S. Dolar Jr., MATE',
+        'Social Work'                 => 'Sherlita A. Sintos, RSW',
     ];
 
-    // Department logos mapping
     $deptLogos = [
-        'COLLEGE OF COMPUTER SCIENCE' => public_path('system_images/comsci.jpg'),
-        'COLLEGE OF BUSINESS ADMINISTRATION' => public_path('system_images/cba.jpg'),
-        'COLLEGE OF EDUCATION' => public_path('system_images/educ.jpg'),
-        'COLLEGE OF CRIMINOLOGY' => public_path('system_images/crim.jpg'),
-        'COLLEGE OF ENGLISH LANGUAGE STUDIES' => public_path('system_images/baels.jpg'),
-        'COLLEGE OF SOCIAL WORK' => public_path('system_images/sw.jpg'),
+        'COLLEGE OF COMPUTER SCIENCE'          => public_path('system_images/comsci.jpg'),
+        'COLLEGE OF BUSINESS ADMINISTRATION'   => public_path('system_images/cba.jpg'),
+        'COLLEGE OF EDUCATION'                 => public_path('system_images/educ.jpg'),
+        'COLLEGE OF CRIMINOLOGY'               => public_path('system_images/crim.jpg'),
+        'COLLEGE OF ENGLISH LANGUAGE STUDIES'  => public_path('system_images/baels.jpg'),
+        'COLLEGE OF SOCIAL WORK'               => public_path('system_images/sw.jpg'),
     ];
 
-    $schoolLogo = public_path('system_images/logo.jpg'); // left logo
+    $schoolLogo = public_path('system_images/logo.jpg');
 
-    // Create new TCPDF
-    $pdf = new CustomPDF('P', 'mm', array(215.9, 355.6), true, 'UTF-8', false);
+    // ================= CREATE PDF =================
+    $pdf = new CustomPDF('P', 'mm', [215.9, 355.6], true, 'UTF-8', false);
     $pdf->SetCreator('CKCM Grading System');
     $pdf->SetAuthor($instructor);
     $pdf->SetTitle('Grading Sheet');
     $pdf->SetMargins(10, 10, 10, true);
 
-$programAbbreviations = [
-    'Bachelor of Elementary Education' => 'BEED',
-    'Bachelor of Secondary Education' => 'BSED',
-    'Bachelor of Science in Education' => 'BSEd',
-    'Bachelor of Science in Business Administration' => 'BSBA',
-    'Bachelor of Science in Operating Management' => 'BSOM',
-    'Bachelor of Science in Financial Management' => 'BSFM',
-    // add more as needed
+    // ================= LOOP PER GROUP =================
+    foreach ($gradesByGroup as $groupKey => $students) {
+
+        [$department, $abbreviation] = explode('|', $groupKey);
+        $schedule = $students->first()->schedule ?? '';
+
+        // ================= FORCE COLLEGE BY DEPARTMENT =================
+   // ================= FORCE EDUCATION BY ABBREVIATION =================
+$educationAbbreviations = [
+    'BEED',
+    'BSED',
+    'BSED - MATH',
+    'BSED - ENGLISH',
+    'BSED-MATH',
+    'BSED-ENGLISH'
 ];
-$businessPrograms = [
-    'Bachelor of Science in Business Administration',
-    'Bachelor of Science in Operating Management',
-    'Bachelor of Science in Financial Management',
-    'BSBA', 'BSOM', 'BSFM'
-];
 
-foreach ($gradesByDept as $dept => $students) {
-    $deptDisplay = trim(preg_replace('/^(bachelor of|bs in|bsc|ba|ab)\s*/i', '', $dept));
-    $parts = preg_split('/\s+in\s+/i', $deptDisplay);
-    $mainDept = trim(end($parts));
+$abbrUpper = strtoupper(trim($abbreviation));
 
-    // Force College of Education for Education programs
-    $educationPrograms = [
-        'Bachelor of Science in Education',
-        'Bachelor of Elementary Education',
-        'Bachelor of Secondary Education',
-        'BEED',
-        'BSED'
-    ];
+if (in_array($abbrUpper, $educationAbbreviations)) {
 
-    // Determine program abbreviation
-    $programAbbr = $programAbbreviations[$program] ?? strtoupper($program);
+    $college    = 'COLLEGE OF EDUCATION';
+    $approvedBy = $programHeads['Education'];
+    $deptLogo   = $deptLogos['COLLEGE OF EDUCATION'];
 
-    // ===== Updated logic for Business Administration & Education =====
-    if (in_array($dept, $educationPrograms)) {
-        $mainDept = 'Education';
-        $college = 'COLLEGE OF EDUCATION';
-        $approvedBy = $programHeads['Education'];
-        $deptLogo = $deptLogos['COLLEGE OF EDUCATION'];
-    } elseif (in_array($dept, $businessPrograms)) {
-        $mainDept = 'Business Administration';
-        $college = 'COLLEGE OF BUSINESS ADMINISTRATION';
-        $approvedBy = $programHeads['Business Administration'];
-        $deptLogo = $deptLogos['COLLEGE OF BUSINESS ADMINISTRATION'];
-    } else {
-        $college = 'COLLEGE OF ' . strtoupper($mainDept);
-        $approvedBy = $programHeads[$mainDept] ?? '___________________________';
-        $deptLogo = $deptLogos[$college] ?? public_path('system_images/logo.jpg');
-    }
+}
+// ================= FORCE COLLEGE BY DEPARTMENT =================
+elseif ($department === 'Education') {
+
+    $college    = 'COLLEGE OF EDUCATION';
+    $approvedBy = $programHeads['Education'];
+    $deptLogo   = $deptLogos['COLLEGE OF EDUCATION'];
+
+} elseif ($department === 'Business Administration') {
+
+    $college    = 'COLLEGE OF BUSINESS ADMINISTRATION';
+    $approvedBy = $programHeads['Business Administration'];
+    $deptLogo   = $deptLogos['COLLEGE OF BUSINESS ADMINISTRATION'];
+
+} else {
+
+    $college    = 'COLLEGE OF ' . strtoupper($department);
+    $approvedBy = $programHeads[$department] ?? '___________________________';
+    $deptLogo   = $deptLogos[$college] ?? $schoolLogo;
+}
+
 
     $pdf->AddPage();
 
@@ -227,9 +228,7 @@ foreach ($gradesByDept as $dept => $students) {
                 <td><b>Date:</b> ' . date('m/d/Y') . '</td>
             </tr>
             <tr>
-                <td>
-                    <b>Course Code:</b>' . $course_no . '  (' . $programAbbr . ')
-                </td>
+                <td><b>Course Code:</b> '.$course_no.' ('.$abbreviation.')</td>
                 <td><b>AY:</b> ' . $academic_year . '</td>
             </tr>
             <tr>
