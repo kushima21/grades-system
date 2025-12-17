@@ -27,6 +27,20 @@ class PDFController extends Controller
             return redirect()->back()->with('error', 'No grades found for this student.');
         }
 
+        $programAbbreviations = [
+    'Bachelor of Elementary Education' => 'BEED',
+    'Bachelor of Secondary Education' => 'BSED',
+    'Bachelor of Science in Education' => 'BSEd',
+    'Bachelor of Science in Business Administration' => 'BSBA',
+    'Bachelor of Science in Operating Management' => 'BSOM',
+    'Bachelor of Science in Financial Management' => 'BSFM',
+    'Bachelor of Science in Computer Science' => 'BSCS',
+    // add more as needed
+];
+
+// Determine the program abbreviation for the student
+$studentProgram = $user->program ?? 'Bachelor of Science in Computer Science'; // fallback if program not set
+$programAbbr = $programAbbreviations[$studentProgram] ?? strtoupper($studentProgram);
         // Create PDF instance
         $pdf = new CustomPDF('P', 'mm', array(215.9, 330.2), true, 'UTF-8', false);
         // $pdf->SetCreator(PDF_CREATOR);
@@ -104,13 +118,13 @@ class PDFController extends Controller
 
                 // Table Body
                 $pdf->SetFont('helvetica', '', 8);
-                foreach ($grades as $grade) {
-                    $pdf->Cell(40, 7, $grade->course_no, 1); // Use subject code instead of number
-                    $pdf->Cell(94, 7, $grade->descriptive_title, 1);
-                    $pdf->Cell(20, 7, number_format($grade->final, 2), 1, 0, 'C');
-                    $pdf->Cell(20, 7, "", 1, 0, 'C'); // Re-exam column (empty)
-                    $pdf->Cell(20, 7, $grade->units, 1, 1, 'C');
-                }
+foreach ($grades as $grade) {
+    $pdf->Cell(55, 7, $course_no . " (" . $programAbbr . ")", 1);
+    $pdf->Cell(79, 7, $grade->descriptive_title, 1);
+    $pdf->Cell(20, 7, number_format($grade->final, 2), 1, 0, 'C');
+    $pdf->Cell(20, 7, "", 1, 0, 'C');
+    $pdf->Cell(20, 7, $grade->units, 1, 1, 'C');
+}
 
                 $pdf->Ln(2);
 

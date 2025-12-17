@@ -20,6 +20,7 @@ return new class extends Migration
                 $table->string('gender')->nullable();
                 $table->string('email');
                 $table->string('program');
+                $table->string('abbreviation');
                 $table->string('department');
                 $table->timestamps();
             });

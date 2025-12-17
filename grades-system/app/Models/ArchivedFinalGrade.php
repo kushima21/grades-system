@@ -11,7 +11,7 @@ class ArchivedFinalGrade extends Model
     protected $fillable = [
         'classID', 'subject_code', 'descriptive_title', 'units', 'instructor',
         'academic_period', 'academic_year', 'schedule', 'studentID', 'name',
-        'gender', 'email','program', 'department', 'prelim', 'midterm', 'semi_finals',
+        'gender', 'email','program','abbreviation', 'department', 'prelim', 'midterm', 'semi_finals',
         'final', 'remarks', 'status', 'added_by'
     ];
 

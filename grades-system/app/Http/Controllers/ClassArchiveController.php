@@ -94,199 +94,223 @@ class ClassArchiveController extends Controller
 
 
     public function generateGradeSheetPDF(Request $request)
-    {
-        $academic_year = $request->academic_year;
-        $academic_period = $request->academic_period;
-        $course_no = $request->course_no;
-        $instructor = $request->instructor;
-        $descriptive_title = $request->descriptive_title;
+{
+    $academic_year = $request->academic_year;
+    $academic_period = $request->academic_period;
+    $course_no = $request->course_no;
+    $instructor = $request->instructor;
+    $descriptive_title = $request->descriptive_title;
 
-        // Fetch relevant final grades
-        $finalGrades = \App\Models\ArchivedFinalGrade::where([
-            ['academic_year', $academic_year],
-            ['academic_period', $academic_period],
-            ['course_no', $course_no],
-            ['instructor', $instructor],
-            ['descriptive_title', $descriptive_title],
-        ])->orderBy('department')->orderBy('name')->get();
+    // Fetch relevant final grades
+    $classID = $request->classID;
+    $program = $request->program;
 
-        // Get schedule from the first record (if exists)
-        $schedule = $finalGrades->first()->schedule ?? '';
+    $finalGrades = \App\Models\ArchivedFinalGrade::where([
+        ['academic_year', $academic_year],
+        ['academic_period', $academic_period],
+        ['classID', $classID],
+        ['course_no', $course_no],
+        ['instructor', $instructor],
+        ['descriptive_title', $descriptive_title],
+    ])->orderBy('department')->orderBy('name')->get();
 
+    // Get schedule from the first record (if exists)
+    $schedule = $finalGrades->first()->schedule ?? '';
 
+    // Group by department
+    $gradesByDept = $finalGrades->groupBy('department');
 
-        // Get the user who archived the grades (added_by from archived_final_grades)
-        // $approvedBy = '___________________________';
-        // if ($finalGrades->count() > 0 && $finalGrades->first()->added_by) {
-        //     $approvedBy = $finalGrades->first()->added_by;
-        // }
+    // Program Heads mapping
+    $programHeads = [
+        'Computer Science' => 'Marjon D. Senarlo, MSIT',
+        'Business Administration' => 'Arlene N. Bacus, MBA',
+        'Education' => 'Everose C. Toylo, M.Ed.',
+        'Criminology' => 'Jennilyn B. Obena, MSCrim',
+        'English Language Studies' => 'Anacleto S. Dolar Jr., MATE',
+        'Social Work' => 'Sherlita A. Sintos, RSW',
+    ];
 
-        // Group by department
-        $gradesByDept = $finalGrades->groupBy('department');
+    // Department logos mapping
+    $deptLogos = [
+        'COLLEGE OF COMPUTER SCIENCE' => public_path('system_images/comsci.jpg'),
+        'COLLEGE OF BUSINESS ADMINISTRATION' => public_path('system_images/cba.jpg'),
+        'COLLEGE OF EDUCATION' => public_path('system_images/educ.jpg'),
+        'COLLEGE OF CRIMINOLOGY' => public_path('system_images/crim.jpg'),
+        'COLLEGE OF ENGLISH LANGUAGE STUDIES' => public_path('system_images/baels.jpg'),
+        'COLLEGE OF SOCIAL WORK' => public_path('system_images/sw.jpg'),
+    ];
 
-        // College mapping (customize as needed)
-        $collegeMap = [
-            'Computer Science' => 'COLLEGE OF COMPUTER SCIENCE',
-            'Business Administration' => 'COLLEGE OF BUSINESS',
-            'Education' => 'COLLEGE OF EDUCATION',
-            'Criminology' => 'COLLEGE OF CRIMINOLOGY',
-            'English Language Studies' => 'COLLEGE OF ENGLISH LANGUAGE STUDIES',
-            'Social Work' => 'COLLEGE OF SOCIAL WORK',
+    $schoolLogo = public_path('system_images/logo.jpg'); // left logo
 
-            // Add more mappings as needed
-        ];
+    // Create new TCPDF
+    $pdf = new CustomPDF('P', 'mm', array(215.9, 355.6), true, 'UTF-8', false);
+    $pdf->SetCreator('CKCM Grading System');
+    $pdf->SetAuthor($instructor);
+    $pdf->SetTitle('Grading Sheet');
+    $pdf->SetMargins(10, 10, 10, true);
 
-        $programHeads = [
-            'Computer Science' => 'Marjon D. Senarlo, MSIT',
-            'Business Administration' => 'Arlene N. Bacus, MBA',
-            'Education' => 'Everose C. Toylo, M.Ed.',
-            'Criminology' => 'Jennilyn B. Obena, MSCrim',
-            'English Language Studies' => 'Anacleto S. Dolar Jr., MATE',
-            'Social Work' => 'Sherlita A. Sintos, RSW',
-            // Add more as needed
-        ];
+$programAbbreviations = [
+    'Bachelor of Elementary Education' => 'BEED',
+    'Bachelor of Secondary Education' => 'BSED',
+    'Bachelor of Science in Education' => 'BSEd',
+    'Bachelor of Science in Business Administration' => 'BSBA',
+    'Bachelor of Science in Operating Management' => 'BSOM',
+    'Bachelor of Science in Financial Management' => 'BSFM',
+    // add more as needed
+];
+$businessPrograms = [
+    'Bachelor of Science in Business Administration',
+    'Bachelor of Science in Operating Management',
+    'Bachelor of Science in Financial Management',
+    'BSBA', 'BSOM', 'BSFM'
+];
 
-        // Create new TCPDF
-        $pdf = new CustomPDF('P', 'mm', array(215.9, 355.6), true, 'UTF-8', false);
-        $pdf->SetCreator('CKCM Grading System');
-        $pdf->SetAuthor($instructor);
-        $pdf->SetTitle('Grading Sheet');
-        $pdf->SetMargins(10, 10, 10, true);
+foreach ($gradesByDept as $dept => $students) {
+    $deptDisplay = trim(preg_replace('/^(bachelor of|bs in|bsc|ba|ab)\s*/i', '', $dept));
+    $parts = preg_split('/\s+in\s+/i', $deptDisplay);
+    $mainDept = trim(end($parts));
 
-        foreach ($gradesByDept as $dept => $students) {
-            // Remove "Bachelor of", "BS in", etc., and get only the last word group (e.g., "Computer Science")
-            $deptDisplay = trim(preg_replace('/^(bachelor of|bs in|bsc|ba|ab)\s*/i', '', $dept));
-            $parts = preg_split('/\s+in\s+/i', $deptDisplay);
-            $mainDept = trim(end($parts));
-            $college = 'COLLEGE OF ' . strtoupper($mainDept);
+    // Force College of Education for Education programs
+    $educationPrograms = [
+        'Bachelor of Science in Education',
+        'Bachelor of Elementary Education',
+        'Bachelor of Secondary Education',
+        'BEED',
+        'BSED'
+    ];
 
-            $pdf->AddPage();
+    // Determine program abbreviation
+    $programAbbr = $programAbbreviations[$program] ?? strtoupper($program);
 
-            $approvedBy = $programHeads[$mainDept] ?? '___________________________';
-
-
-            $schoolLogo = public_path('system_images/logo.jpg'); // left logo
-            $deptLogos = [
-                'COLLEGE OF COMPUTER SCIENCE' => public_path('system_images/comsci.jpg'),
-                'COLLEGE OF BUSINESS ADMINISTRATION' => public_path('system_images/cba.jpg'),
-                'COLLEGE OF EDUCATION' => public_path('system_images/educ.jpg'),
-                'COLLEGE OF CRIMINOLOGY' => public_path('system_images/crim.jpg'),
-                'COLLEGE OF ENGLISH LANGUAGE STUDIES' => public_path('system_images/baels.jpg'),
-                'COLLEGE OF SOCIAL WORK' => public_path('system_images/sw.jpg'),
-
-                // Add more mappings as needed
-            ];
-            $deptLogo = $deptLogos[$college] ?? public_path('system_images/logo.jpg'); // right logo fallback
-
-
-            $html = '
-           <table width="100%">
-            <tr>
-                <td width="20%" align="right">
-                    <img src="' . $schoolLogo . '" width="70" >
-                </td>
-                <td width="60%" align="center">
-                    <p style="font-size:12px; font-weight:bold; line-height:2px;">CHRIST THE KING COLLEGE DE MARANDING, INC.</p>
-                    <p style="font-size:10px; line-height:1px;">Maranding Lala, Lanao del Norte</p>
-                    <p style="font-size:11px; font-weight:bold; line-height:15px;">' . $college . '</p>
-                    <p style="font-size:10px; font-weight:bold; line-height:10px;">GRADING SHEET</p>
-                    <p style=" line-height:1px;"></p>
-                </td>
-                <td width="20%" align="left">
-                    <img src="' . $deptLogo . '" width="70">
-                </td>
-            </tr>
-             </table>
-             <br>
-            <table cellpadding="1" style=" margin-left:10px; font-size:10px;">
-                <tr>
-                    <td><b>Instructor:</b> ' . $instructor . '</td>
-                    <td><b>Date:</b> ' . date('m/d/Y') . '</td>
-                </tr>
-                <tr>
-                    <td><b>Course Code:</b> ' . $course_no . '</td>
-                    <td><b>AY:</b> ' . $academic_year . '</td>
-                </tr>
-                <tr>
-                    <td><b>Descriptive Title:</b> ' . $descriptive_title . ' </td>
-                    <td><b>Semester:</b> ' . $academic_period . '</td>
-                </tr>
-                <tr>
-                     <td><b>Number of Student:</b> ' . $students->count() . '</td>
-                        <td><b>Schedule:</b> ' . $schedule . '</td>
-                </tr>
-            </table>
-
-            <table border="1" cellpadding="2" >
-                <thead>
-                    <tr style="background-color:#eee; font-size:10px;" >
-                        <th width="40%"  style="text-align:center;">Name of Student</th>
-                        <th width="10%"  style="text-align:center;">Prelim</th>
-                        <th width="10%"  style="text-align:center;">Midterm</th>
-                        <th width="15%"  style="text-align:center;">Semi-Final</th>
-                        <th width="10%"  style="text-align:center;">Final</th>
-                        <th width="15%"  style="text-align:center;">Remarks</th>
-                    </tr>
-                </thead>
-                <tbody>
-            ';
-            foreach ($students as $student) {
-                $html .= '
-                    <tr style="font-size:10px;">
-                        <td width="40%"  style="text-align:start;">' . htmlspecialchars($student->name) . '</td>
-                        <td width="10%"  style="text-align:center;">' . htmlspecialchars($student->prelim) . '</td>
-                        <td width="10%"  style="text-align:center;">' . htmlspecialchars($student->midterm) . '</td>
-                        <td width="15%"  style="text-align:center;">' . htmlspecialchars($student->semi_finals) . '</td>
-                        <td width="10%"  style="text-align:center;">' . htmlspecialchars($student->final) . '</td>
-                        <td width="15%"  style="text-align:center;">' . htmlspecialchars($student->remarks) . '</td>
-                    </tr>
-                ';
-            }
-            $html .= '
-                <tr>
-                    <td colspan="6" style="text-align:center; font-weight:bold; border:none; font-size: 9px;">*******Nothing Follows********</td>
-                </tr>
-            ';
-            $html .= '</tbody></table><br>';
-
-            $html .= '
-            <br>
-           <table>
-                <tr>
-                    <td colspan="2" style="font-size:10px; text-align:left;">
-                        Submitted by: <b style="font-size:9px;">' . strtoupper($instructor) . '</b><br>
-                        <table width="100%"><tr><td align="center" style="font-size:9px;">Instructor</td><td></td></tr></table>
-                    </td>
-                </tr>
-                <tr>
-                  <td colspan="2" style="font-size:10px; text-align:center;"></td>
-                </tr>
-                <tr>
-
-               <td style="font-size:10px; ">
-                    Approved by: <b style="font-size:9px;">' . strtoupper($approvedBy) . '</b><br>
-                     <table width="100%"><tr><td align="center" style="font-size:9px;">Dean</td></tr></table>
-                </td>
-                <td style="font-size:10px; ">
-                    Submitted to:<b style="font-size:9px;"> ' . strtoupper('ELVYN P. SALMERON, MMEM') . '</b> <br>
-                     <table width="100%"><tr><td align="center" style="font-size:9px;">Registrar</td></tr></table>
-                </td>
-            </tr>
-            </table>
-            <br>
-            <p style="font-size:9px; line-height:10px; text-align:center;">
-                1.0=<b>EXCELLENT</b> &nbsp; 1.25-1.5=<b>VERY SATISFACTORY</b> &nbsp; 1.75-2.0=<b>SATISFACTORY</b>
-                2.25-2.5=<b>FAIR</b> &nbsp; 2.75-3.0=<b>POOR</b> &nbsp; 5.0=<b>FAILED</b>
-            </p>
-            <div style="height: 10px;"></div>
-            <p style="line-height:0; font-size:9px; ">*Attachment: Summary of Students with Deficiency</p>
-            <p style="line-height:0; font-size:9px; ">*Copy Furnished: Instructor, College Dean and Registrar</p>
-            ';
-
-            $pdf->writeHTML($html, true, false, true, false, '');
-        }
-
-        $pdf->Output('gradesheet.pdf', 'I');
-        exit;
+    // ===== Updated logic for Business Administration & Education =====
+    if (in_array($dept, $educationPrograms)) {
+        $mainDept = 'Education';
+        $college = 'COLLEGE OF EDUCATION';
+        $approvedBy = $programHeads['Education'];
+        $deptLogo = $deptLogos['COLLEGE OF EDUCATION'];
+    } elseif (in_array($dept, $businessPrograms)) {
+        $mainDept = 'Business Administration';
+        $college = 'COLLEGE OF BUSINESS ADMINISTRATION';
+        $approvedBy = $programHeads['Business Administration'];
+        $deptLogo = $deptLogos['COLLEGE OF BUSINESS ADMINISTRATION'];
+    } else {
+        $college = 'COLLEGE OF ' . strtoupper($mainDept);
+        $approvedBy = $programHeads[$mainDept] ?? '___________________________';
+        $deptLogo = $deptLogos[$college] ?? public_path('system_images/logo.jpg');
     }
+
+    $pdf->AddPage();
+
+        // ------------------- HTML Layout (UNCHANGED) -------------------
+        $html = '
+       <table width="100%">
+        <tr>
+            <td width="20%" align="right">
+                <img src="' . $schoolLogo . '" width="70" >
+            </td>
+            <td width="60%" align="center">
+                <p style="font-size:12px; font-weight:bold; line-height:2px;">CHRIST THE KING COLLEGE DE MARANDING, INC.</p>
+                <p style="font-size:10px; line-height:1px;">Maranding Lala, Lanao del Norte</p>
+                <p style="font-size:11px; font-weight:bold; line-height:15px;">' . $college . '</p>
+                <p style="font-size:10px; font-weight:bold; line-height:10px;">GRADING SHEET</p>
+                <p style=" line-height:1px;"></p>
+            </td>
+            <td width="20%" align="left">
+                <img src="' . $deptLogo . '" width="70">
+            </td>
+        </tr>
+         </table>
+         <br>
+        <table cellpadding="1" style=" margin-left:10px; font-size:10px;">
+            <tr>
+                <td><b>Instructor:</b> ' . $instructor . '</td>
+                <td><b>Date:</b> ' . date('m/d/Y') . '</td>
+            </tr>
+            <tr>
+                <td>
+                    <b>Course Code:</b>' . $course_no . '  (' . $programAbbr . ')
+                </td>
+                <td><b>AY:</b> ' . $academic_year . '</td>
+            </tr>
+            <tr>
+                <td><b>Descriptive Title:</b> ' . $descriptive_title . '</td>
+                <td><b>Semester:</b> ' . $academic_period . '</td>
+            </tr>
+            <tr>
+                <td><b>Number of Student:</b> ' . $students->count() . '</td>
+                <td><b>Schedule:</b> ' . $schedule . '</td>
+            </tr>
+        </table>
+
+        <table border="1" cellpadding="2" >
+            <thead>
+                <tr style="background-color:#eee; font-size:10px;" >
+                    <th width="40%"  style="text-align:center;">Name of Student</th>
+                    <th width="10%"  style="text-align:center;">Prelim</th>
+                    <th width="10%"  style="text-align:center;">Midterm</th>
+                    <th width="15%"  style="text-align:center;">Semi-Final</th>
+                    <th width="10%"  style="text-align:center;">Final</th>
+                    <th width="15%"  style="text-align:center;">Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+        ';
+        foreach ($students as $student) {
+            $html .= '
+                <tr style="font-size:10px;">
+                    <td width="40%"  style="text-align:start;">' . htmlspecialchars($student->name) . '</td>
+                    <td width="10%"  style="text-align:center;">' . htmlspecialchars($student->prelim) . '</td>
+                    <td width="10%"  style="text-align:center;">' . htmlspecialchars($student->midterm) . '</td>
+                    <td width="15%"  style="text-align:center;">' . htmlspecialchars($student->semi_finals) . '</td>
+                    <td width="10%"  style="text-align:center;">' . htmlspecialchars($student->final) . '</td>
+                    <td width="15%"  style="text-align:center;">' . htmlspecialchars($student->remarks) . '</td>
+                </tr>
+            ';
+        }
+        $html .= '
+            <tr>
+                <td colspan="6" style="text-align:center; font-weight:bold; border:none; font-size: 9px;">*******Nothing Follows********</td>
+            </tr>
+            </tbody></table><br>
+
+        <br>
+       <table>
+            <tr>
+                <td colspan="2" style="font-size:10px; text-align:left;">
+                    Submitted by: <b style="font-size:9px;">' . strtoupper($instructor) . '</b><br>
+                    <table width="100%"><tr><td align="center" style="font-size:9px;">Instructor</td><td></td></tr></table>
+                </td>
+            </tr>
+            <tr>
+              <td colspan="2" style="font-size:10px; text-align:center;"></td>
+            </tr>
+            <tr>
+
+           <td style="font-size:10px; ">
+                Approved by: <b style="font-size:9px;">' . strtoupper($approvedBy) . '</b><br>
+                 <table width="100%"><tr><td align="center" style="font-size:9px;">Dean</td></tr></table>
+            </td>
+            <td style="font-size:10px; ">
+                Submitted to:<b style="font-size:9px;"> ' . strtoupper('ELVYN P. SALMERON, MMEM') . '</b> <br>
+                 <table width="100%"><tr><td align="center" style="font-size:9px;">Registrar</td></tr></table>
+            </td>
+        </tr>
+        </table>
+        <br>
+        <p style="font-size:9px; line-height:10px; text-align:center;">
+            1.0=<b>EXCELLENT</b> &nbsp; 1.25-1.5=<b>VERY SATISFACTORY</b> &nbsp; 1.75-2.0=<b>SATISFACTORY</b>
+            2.25-2.5=<b>FAIR</b> &nbsp; 2.75-3.0=<b>POOR</b> &nbsp; 5.0=<b>FAILED</b>
+        </p>
+        <div style="height: 10px;"></div>
+        <p style="line-height:0; font-size:9px; ">*Attachment: Summary of Students with Deficiency</p>
+        <p style="line-height:0; font-size:9px; ">*Copy Furnished: Instructor, College Dean and Registrar</p>
+        ';
+
+        $pdf->writeHTML($html, true, false, true, false, '');
+    }
+
+    $pdf->Output('gradesheet.pdf', 'I');
+    exit;
+}
+
 }

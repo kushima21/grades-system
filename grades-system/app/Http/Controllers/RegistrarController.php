@@ -290,20 +290,29 @@ public function show(Request $request, $class)
     $userRoles = explode(',', $user->role);
 
     if (in_array('dean', $userRoles)) {
-        $userDepartment = $user->department;
+        $userDepartment = strtolower($user->department);
 
-        if (strtolower($userDepartment) === 'bachelor of science in education') {
-            // Dean of BSEd can see both BEED and BSED students
+        if ($userDepartment === 'bachelor of science in education') {
+            // Dean of Education sees BEED and BSED
             $filteredStudents = Classes_Student::where('classID', $class)
                 ->whereIn('department', [
                     'Bachelor of Elementary Education',
                     'Bachelor of Secondary Education'
                 ])
                 ->get();
+        } elseif ($userDepartment === 'bachelor of science in business administration') {
+            // Dean of BSBA sees BSBA, BSOM, BSFM
+            $filteredStudents = Classes_Student::where('classID', $class)
+                ->whereIn('department', [
+                    'Bachelor of Science in Business Administration',
+                    'Bachelor of Science in Operating Management',
+                    'Bachelor of Science in Financial Management'
+                ])
+                ->get();
         } else {
             // Other deans: only their own department
             $filteredStudents = Classes_Student::where('classID', $class)
-                ->where('department', $userDepartment)
+                ->where('department', $user->department)
                 ->get();
         }
     } else {
@@ -311,6 +320,7 @@ public function show(Request $request, $class)
         $filteredStudents = Classes_Student::where('classID', $class)->get();
     }
 
+    // Pass to view
     return view('registrar.classes_view', compact(
         'classes',
         'students',
@@ -321,65 +331,81 @@ public function show(Request $request, $class)
         'filteredStudents',
         'hasLockedAndSubmitted',
         'deanStatusConfirmed',
-        'totalStudents' // 🔥 pass total student count
+        'totalStudents'
     ));
 }
 
 
 
-
-
 public function importCSV(Request $request, $class)
 {
-    // Fetch class model
+    // Fetch the class record
     $class = Classes::findOrFail($class);
 
-    // Validate file
+    // Validate uploaded CSV file
     $request->validate([
         'students_csv' => 'required|mimes:csv,txt|max:2048'
     ]);
 
-    // Read CSV file
+    // Read CSV data into an array
     $file = $request->file('students_csv');
     $csvData = array_map('str_getcsv', file($file));
 
     // Remove CSV header row
     array_shift($csvData);
 
+    // Map CSV program codes to department names
     $programToDepartment = [
-        'BSBA' => 'Bachelor of Science in Business Administration',
-        'BSBA-OM' => 'Bachelor of Science in Business Administration',
-        'BSBA-FM' => 'Bachelor of Science in Business Administration',
-        'BSCS' => 'Bachelor of Science in Computer Science',
-        'BSSW' => 'Bachelor of Science in Social Work',
-        'BAELS' => 'Bachelor of Arts in English Language Studies',
-        'BEED'  => 'Bachelor of Elementary Education',
-        'BSED-Math' => 'Bachelor of Secondary Education',
-        'BSED-English' => 'Bachelor of Secondary Education',
-        'BSED' => 'Bachelor of Secondary Education',
-        'BSCRIM' => 'Bachelor of Science in Criminology',
+        'BSBA'        => 'Bachelor of Science in Business Administration',
+        'BSBA - OM'   => 'Bachelor of Science in Operating Management',
+        'BSBA - FM'   => 'Bachelor of Science in Financial Management',
+        'BSCS'        => 'Bachelor of Science in Computer Science',
+        'BSSW'        => 'Bachelor of Science in Social Work',
+        'BAELS'       => 'Bachelor of Arts in English Language Studies',
+        'BEED'        => 'Bachelor of Elementary Education',
+        'BSED - Math'   => 'Bachelor of Secondary Education',
+        'BSED - English'=> 'Bachelor of Secondary Education',
+        'BSED'        => 'Bachelor of Secondary Education',
+        'BSCRIM'      => 'Bachelor of Science in Criminology',
     ];
 
     $students = [];
     $insertedStudentIDs = [];
 
     foreach ($csvData as $row) {
-        if (count($row) < 5) continue; // Skip invalid rows
+        // Ensure CSV has enough columns
+        if (count($row) < 7) continue;
 
+        // Full name format: Last, First Middle
         $fullname = trim($row[1] . ", " . $row[2] . " " . $row[3]);
-        $program = strtoupper(trim(explode('-', $row[6])[0]));
 
-        $department = $programToDepartment[$program] ?? 'Unknown Department';
+        // CSV program column for mapping only
+        $programCSV = trim($row[6]);
 
+        // Map CSV program to department (case-insensitive)
+        $department = null;
+        foreach ($programToDepartment as $abbr => $fullName) {
+            if (strcasecmp($abbr, $programCSV) === 0) {
+                $department = $fullName;
+                break;
+            }
+        }
+
+        // If no match, fallback to CSV value
+        $department = $department ?? $programCSV;
+
+        // Prepare student data
         $students[] = [
-            'studentID'  => $row[4],
-            'email'      => $row[5],
-            'name'       => $fullname,
-            'gender'     => null,
-            'department' => $department,
-            'classID'    => $class->id,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'studentID'    => $row[4],
+            'email'        => $row[5],
+            'name'         => $fullname,
+            'gender'       => null,
+            'department'   => $department,        // Full department name
+            'program'      => $class->program,    // Program from classes table
+            'abbreviation' => $programCSV,        // ✅ New: save CSV program code here
+            'classID'      => $class->id,
+            'created_at'   => now(),
+            'updated_at'   => now(),
         ];
 
         $insertedStudentIDs[] = $row[4];
@@ -388,7 +414,7 @@ public function importCSV(Request $request, $class)
     // Bulk insert students
     Classes_Student::insert($students);
 
-    // Insert default quiz scores
+    // Insert default quiz scores for each student
     $periodicTerms = ['Prelim', 'Midterm', 'Semi-Finals', 'Finals'];
     $quizScores = [];
 
@@ -412,6 +438,12 @@ public function importCSV(Request $request, $class)
 
     return back()->with('success', 'Students imported successfully.');
 }
+
+
+
+
+
+
 
 public function addstudent(Request $request, Classes $class)
 {
@@ -710,6 +742,7 @@ public function addQuizAndScore(Request $request, $class)
                 'gender'            => $classStudent->gender,
                 'email'             => $classStudent->email,
                 'department'        => $classStudent->department,
+                'abbreviation'      => $classStudent->abbreviation, // ✅ Save CSV program code here
             ]
         );
 
@@ -737,6 +770,7 @@ public function addQuizAndScore(Request $request, $class)
 
     return redirect()->back()->with('success', 'Scores and raw grades saved successfully.');
 }
+
 
 
 // CLOSE TAG: Add Quiz and Score
@@ -958,8 +992,9 @@ public function initializeGrades(Request $request)
             ->where('classID', $grade['classID'])
             ->where('studentID', $grade['studentID'])
             ->update([
-                'remarks' => $remarks,
-                'program' => optional($studentInfo)->program, // ⭐ Save program in raw_grades
+                'remarks'      => $remarks,
+                'program'      => optional($studentInfo)->program,       // ✅ Save program
+                'abbreviation' => optional($studentInfo)->abbreviation,  // ✅ Save abbreviation
             ]);
 
         // ---------------- Insert or update final_grade ----------------
@@ -980,11 +1015,12 @@ public function initializeGrades(Request $request)
                 'academic_period'   => optional($classInfo)->academic_period,
                 'schedule'          => optional($classInfo)->schedule,
 
-                'name'       => optional($studentInfo)->name,
-                'gender'     => optional($studentInfo)->gender,
-                'email'      => optional($studentInfo)->email,
-                'department' => optional($studentInfo)->department,
-                'program'    => optional($studentInfo)->program, // ⭐ Save program in final_grade
+                'name'        => optional($studentInfo)->name,
+                'gender'      => optional($studentInfo)->gender,
+                'email'       => optional($studentInfo)->email,
+                'department'  => optional($studentInfo)->department,
+                'program'     => optional($studentInfo)->program,       // ✅ Save program
+                'abbreviation'=> optional($studentInfo)->abbreviation,  // ✅ Save abbreviation
 
                 'prelim'      => $grade['prelim'] ?? null,
                 'midterm'     => $grade['midterm'] ?? null,
@@ -992,7 +1028,7 @@ public function initializeGrades(Request $request)
                 'final'       => $grade['final'] ?? null,
 
                 'remarks'     => $remarks,
-                'status'      => $existing->status ?? '', 
+                'status'      => $existing->status ?? '',
                 'updated_at'  => now(),
                 'created_at'  => $existing ? null : now(),
             ]
@@ -1421,8 +1457,6 @@ public function submitToRegistrar(Request $request)
 
         return back()->with('success', 'Dean’s decision has been submitted successfully!');
     }
-
-
 public function submitDecisionRegistrar(Request $request)
 {
     // ✅ VALIDATION
@@ -1446,9 +1480,9 @@ public function submitDecisionRegistrar(Request $request)
     ];
 
     /*
-    |--------------------------------------------------------------------------
+    |--------------------------------------------------------------------------|
     | ❌ REJECTED BY REGISTRAR
-    |--------------------------------------------------------------------------
+    |--------------------------------------------------------------------------|
     */
     if ($request->registrar_status === 'Rejected') {
         $updateData['registrar_status'] = 'Rejected';
@@ -1500,9 +1534,9 @@ public function submitDecisionRegistrar(Request $request)
     }
 
     /*
-    |--------------------------------------------------------------------------
+    |--------------------------------------------------------------------------|
     | ✅ APPROVED BY REGISTRAR
-    |--------------------------------------------------------------------------
+    |--------------------------------------------------------------------------|
     */
     if ($request->registrar_status === 'Approved') {
         if (empty($request->grades)) {
@@ -1528,7 +1562,8 @@ public function submitDecisionRegistrar(Request $request)
             $academicYear = optional($classInfo)->academic_year;
             $academicPeriod = optional($classInfo)->academic_period;
             $addedby = optional($classInfo)->added_by;
-            $program = optional($classInfo)->program; // ✅ program
+            $program = optional($classInfo)->program;
+            $abbreviation = $studentInfo->abbreviation; // ✅ abbreviation
 
             // -----------------------------
             // Archive quizzes & scores
@@ -1587,7 +1622,8 @@ public function submitDecisionRegistrar(Request $request)
                 'academic_year' => $academicYear,
                 'academic_period' => $academicPeriod,
                 'department' => $selectedDepartment,
-                'program' => $program, // ✅ program saved
+                'program' => $program,
+                'abbreviation' => $abbreviation, // ✅ Save abbreviation
                 'name' => $studentInfo->name,
                 'gender' => $studentInfo->gender,
                 'email' => $studentInfo->email,
@@ -1680,6 +1716,7 @@ public function submitDecisionRegistrar(Request $request)
 
     return back()->with('success', 'Registrar’s decision has been submitted successfully!');
 }
+
 
 
     public function ClassesMenu()

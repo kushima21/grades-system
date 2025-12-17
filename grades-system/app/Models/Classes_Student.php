@@ -16,6 +16,7 @@ class Classes_Student extends Model
         'gender',
         'email',
         'program',
+        'abbreviation',
         'deparment',
     ];
 }
