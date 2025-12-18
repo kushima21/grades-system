@@ -26,7 +26,6 @@
                     <tr>
                         <th>Course No</th>
                         <th>Descriptive Title</th>
-                        <th>Instructor</th>
                         <th>Academic Year</th>
                         <th>Academic Period</th>
                         <th>Schedule</th>
@@ -39,7 +38,6 @@
                     <tr>
                         <td>{{ $class->course_no }}</td>
                         <td>{{ $class->descriptive_title }}</td>
-                        <td>{{ $class->instructor }}</td>
                         <td>{{ $class->academic_year }}</td>
                         <td>{{ $class->academic_period }}</td>
                         <td>{{ $class->schedule }}</td>

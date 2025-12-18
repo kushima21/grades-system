@@ -119,6 +119,9 @@
             @endif
 
             @foreach ($classes as $class)
+            @php
+    $userDepartment = auth()->user()->department;
+@endphp
             <div class="classes-box">
                 <div class="classes-header">
                     <h3 class="my-c">{{ $class->course_no }}</h3>

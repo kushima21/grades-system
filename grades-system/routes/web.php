@@ -246,3 +246,10 @@ Route::post('/registrar-submit-grades', [RegistrarController::class, 'submitToRe
     Route::get('/generate-pdf', [PDFController::class, 'generatePDF']);
 
     Route::post('/instructor/generate-gradesheet-pdf', [ClassArchiveController::class, 'generateGradeSheetPDF'])->name('instructor.generate_gradesheet_pdf');
+
+
+    Route::delete('/class/{class}/student/{student}', [RegistrarController::class, 'removestudent'])
+    ->name('class.remove');
+
+Route::post('/class/{class}/students/bulk-remove', [RegistrarController::class, 'bulkRemoveStudents'])
+    ->name('class.bulkRemove');

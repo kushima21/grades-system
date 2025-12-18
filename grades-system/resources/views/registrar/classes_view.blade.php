@@ -5,6 +5,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
 
 @section('content')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <div class="classes-view-main-container">
 
     {{-- Breadcrumb --}}
@@ -88,44 +90,61 @@
         {{-- Student Table --}}
         @if(!$hasLockedAndSubmitted)
         <div class="student-wrapper">
-            <table class="student-table-container">
-                <thead>
-                    <tr>
-                        <th><input type="checkbox" id="select-all"> Select All</th>
-                        <th>Student ID</th>
-                        <th>Name</th>
-                        <th>Gender</th>
-                        <th>Email</th>
-                        <th>Department</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($classes_student as $student)
-                    <tr>
-                        <td><input type="checkbox" class="student-checkbox" name="selected_students[]" value="{{ $student->studentID }}"></td>
-                        <td>{{ $student->studentID }}</td>
-                        <td>{{ $student->name }}</td>
-                        <td>{{ $student->gender }}</td>
-                        <td>{{ $student->email }}</td>
-                        <td>{{ $student->department }}</td>
-                        <td>
-                            <i class="fa-solid fa-trash delete-single" style="cursor:pointer; color:red;" data-remove-url="{{ route('class.remove', [$classes->id, $student->studentID]) }}"></i>
-                        </td>
-                    </tr>
-                    @endforeach
+            <form method="POST" action="{{ route('class.bulkRemove', $classes->id) }}">
+    @csrf
 
-                    {{-- Bulk Delete Form --}}
-                    <form id="bulk-delete-form" method="POST" action="{{ route('class.bulkRemove', $classes->id) }}" style="display:none;">
-                        @csrf
-                        <tr id="bulk-delete-row" style="display:none;">
-                            <td colspan="7" style="text-align:right;">
-                                <i class="fa-solid fa-trash delete-selected" style="cursor:pointer; color:red;" data-bulk-url="{{ route('class.bulkRemove', $classes->id) }}"></i> Delete Selected
-                            </td>
-                        </tr>
-                    </form>
-                </tbody>
-            </table>
+    <table class="student-table-container">
+        <thead>
+            <tr>
+                <th>
+                    <input type="checkbox" id="select-all"> Select All
+                </th>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Gender</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        @foreach ($classes_student as $student)
+            <tr>
+                <td>
+                    <input type="checkbox"
+                           class="student-checkbox"
+                           name="selected_students[]"
+                           value="{{ $student->studentID }}">
+                </td>
+                <td>{{ $student->studentID }}</td>
+                <td>{{ $student->name }}</td>
+                <td>{{ $student->gender }}</td>
+                <td>{{ $student->email }}</td>
+                <td>{{ $student->department }}</td>
+                <td>
+                    <i class="fa-solid fa-trash delete-single"
+                       style="cursor:pointer;color:red;"
+                       data-remove-url="{{ route('class.remove', [$classes->id, $student->studentID]) }}"></i>
+                </td>
+            </tr>
+        @endforeach
+
+        {{-- BULK DELETE ROW --}}
+        <tr id="bulk-delete-row" style="display:none;">
+            <td colspan="7" style="text-align:right;">
+                <button type="submit"
+                        class="delete-selected"
+                        style="background:none;border:none;color:red;cursor:pointer;">
+                    <i class="fa-solid fa-trash"></i> Delete Selected
+                </button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+
         </div>
 
         {{-- Single Delete Form --}}
@@ -434,24 +453,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Single Delete
-    const deleteSingles = document.querySelectorAll('.delete-single');
-    deleteSingles.forEach(icon => {
-        icon.addEventListener('click', function () {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "This student will be removed permanently!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, delete!'
-            }).then(result => {
-                if (result.isConfirmed) {
-                    const form = document.getElementById('single-delete-form');
-                    form.action = this.dataset.removeUrl;
-                    form.submit();
-                }
-            });
+document.querySelectorAll('.delete-single').forEach(icon => {
+    icon.addEventListener('click', function () {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This student will be removed permanently!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete!'
+        }).then(result => {
+            if (result.isConfirmed) {
+                const form = document.getElementById('single-delete-form');
+                form.action = this.dataset.removeUrl;
+                form.submit();
+            }
         });
     });
+});
 });
 </script>
 @endsection
