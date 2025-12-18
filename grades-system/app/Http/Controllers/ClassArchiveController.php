@@ -172,7 +172,18 @@ $educationAbbreviations = [
 
 $bsbaAbbreviations = [
     'BSBA - FM',
-    'BSBA - OM'
+    'BSBA -FM',
+    'BSBA-OM',
+    'BSBA - OM',
+    'BSBA'
+];
+
+$bscsAbbreviations = [
+    'BSCS',
+    'BSCS - A',
+    'BSCS - B',
+    'BSCS-A',
+    'BSCS-B'
 ];
 
 $abbrUpper = strtoupper(trim($abbreviation));
@@ -188,6 +199,12 @@ if (in_array($abbrUpper, $educationAbbreviations)) {
     $college    = 'COLLEGE OF BUSINESS ADMINISTRATION';
     $approvedBy = $programHeads['Business Administration'];
     $deptLogo   = $deptLogos['COLLEGE OF BUSINESS ADMINISTRATION'];
+
+} elseif (in_array($abbrUpper, $bscsAbbreviations)) {
+    // ================= FORCE COMPUTER SCIENCE =================
+    $college    = 'COLLEGE OF COMPUTER SCIENCE';
+    $approvedBy = $programHeads['Computer Science'];
+    $deptLogo   = $deptLogos['COLLEGE OF COMPUTER SCIENCE'];
 
 } elseif ($department === 'Education') {
     // ================= FORCE EDUCATION BY DEPARTMENT =================
@@ -207,6 +224,7 @@ if (in_array($abbrUpper, $educationAbbreviations)) {
     $approvedBy = $programHeads[$department] ?? '___________________________';
     $deptLogo   = $deptLogos[$college] ?? $schoolLogo;
 }
+
 
     $pdf->AddPage();
 

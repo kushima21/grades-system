@@ -24,6 +24,16 @@
             <h2 class="classes-modal-header">
                 Create New Class
             </h2>
+            <div class="multipleClasses">
+                <form method="POST" action="">
+                    @csrf
+                    <input type="file" name="class_file" id="class_file" accept=".csv">
+                    <button type="submit" class="classFileBtn">
+                       <i class="fa-solid fa-file-arrow-up"></i>Add Multiple Classes
+                    </button>
+                </form>
+                 <p class="csv-p">or add student individually</p>
+            </div>
             <div class="classes-form-container">
                <form id="classForm" method="POST" action="{{ route('classes.create') }}">
                 @csrf
