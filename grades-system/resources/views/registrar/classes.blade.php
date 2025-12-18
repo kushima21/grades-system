@@ -102,7 +102,7 @@
                 </form>
             </div>
         </div>
-        <div class="classes-main-container-box">
+       <div class="classes-main-container-box">
     @php
         $role = strtolower(auth()->user()->role);
         $isDean = str_contains($role, 'dean');
@@ -120,56 +120,63 @@
     </div>
     @endif
 
-    @foreach ($classes as $class)
-    <div class="classes-box">
-        <div class="classes-header">
-            <h3 class="my-c">{{ $class->course_no }}</h3>
-            <h3 class="subheader">{{ $class->descriptive_title }}</h3>
+    @if($classes->isEmpty())
+        <p style="text-align:center; display: flex; align-items: center; justify-content: center; color:gray; font-weight:400; margin-top:20px;">
+            No added classes yet.
+        </p>
+    @else
+        @foreach ($classes as $class)
+        <div class="classes-box">
+            <div class="classes-header">
+                <h3 class="my-c">{{ $class->course_no }}</h3>
+                <h3 class="subheader">{{ $class->descriptive_title }}</h3>
+            </div>
+
+            <div class="middle-c">
+                <span>School Year: {{ $class->academic_year }}</span><br>
+                <span>School Period: {{ $class->academic_period }}</span><br>
+                <span>Schedule: {{ $class->schedule }}</span><br>
+                <span>Status: {{ $class->status }}</span><br>
+                <span>{{ $class->department }}</span>
+            </div>
+
+            <div class="bottom-c">
+                <span>Instructor: {{ $class->instructor }}</span>
+            </div>
+
+            <div class="icon-container">
+                {{-- SHOW EDIT & DELETE ONLY IF logged-in user is the one who added the class --}}
+                @if($loggedInUserName == $class->added_by)
+                    <span class="icon edit-icon" 
+                        data-tooltip="Edit"
+                        data-id="{{ $class->id }}"
+                        data-course_no="{{ $class->course_no }}"
+                        data-descriptive_title="{{ $class->descriptive_title }}"
+                        data-units="{{ $class->units }}"
+                        data-instructor="{{ $class->instructor }}"
+                        data-academic_year="{{ $class->academic_year }}"
+                        data-academic_period="{{ $class->academic_period }}"
+                        data-schedule="{{ $class->schedule }}"
+                        data-department="{{ $class->department }}"
+                        data-status="{{ $class->status }}">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </span>
+
+                    <span class="icon delete-icon" data-tooltip="Delete" data-id="{{ $class->id }}">
+                        <i class="fa-solid fa-trash"></i>
+                    </span>
+                @endif
+
+                {{-- VIEW IS ALWAYS VISIBLE --}}
+                <a href="{{ route('class.show', $class->id) }}" class="icon view-icon" data-tooltip="View">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            </div>
         </div>
-
-        <div class="middle-c">
-            <span>School Year: {{ $class->academic_year }}</span><br>
-            <span>School Period: {{ $class->academic_period }}</span><br>
-            <span>Schedule: {{ $class->schedule }}</span><br>
-            <span>Status: {{ $class->status }}</span><br>
-            <span>{{ $class->department }}</span>
-        </div>
-
-        <div class="bottom-c">
-            <span>Instructor: {{ $class->instructor }}</span>
-        </div>
-
-        <div class="icon-container">
-            {{-- SHOW EDIT & DELETE ONLY IF logged-in user is the one who added the class --}}
-           @if($loggedInUserName == $class->added_by)
-                <span class="icon edit-icon" 
-                    data-tooltip="Edit"
-                    data-id="{{ $class->id }}"
-                    data-course_no="{{ $class->course_no }}"
-                    data-descriptive_title="{{ $class->descriptive_title }}"
-                    data-units="{{ $class->units }}"
-                    data-instructor="{{ $class->instructor }}"
-                    data-academic_year="{{ $class->academic_year }}"
-                    data-academic_period="{{ $class->academic_period }}"
-                    data-schedule="{{ $class->schedule }}"
-                    data-department="{{ $class->department }}"
-                    data-status="{{ $class->status }}">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                </span>
-
-                <span class="icon delete-icon" data-tooltip="Delete" data-id="{{ $class->id }}">
-                    <i class="fa-solid fa-trash"></i>
-                </span>
-            @endif
-
-            {{-- VIEW IS ALWAYS VISIBLE --}}
-            <a href="{{ route('class.show', $class->id) }}" class="icon view-icon" data-tooltip="View">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </a>
-        </div>
-    </div>
-    @endforeach
+        @endforeach
+    @endif
 </div>
+
 
         
     </div>

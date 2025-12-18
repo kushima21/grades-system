@@ -1188,7 +1188,6 @@ public function lockInGrades(Request $request)
 
         return back()->with('success', "Final grades have been unlocked!");
     }
-
 public function submitToDean(Request $request)
 {
     $request->validate([
@@ -1219,6 +1218,10 @@ public function submitToDean(Request $request)
     $submitter = Auth::user();
     $dean = User::where('role', 'dean')->first(); // adjust to your database
 
+    if (!$dean) {
+        return redirect()->back()->with('error', 'No dean found to notify!');
+    }
+
     DB::table('notif_table')->insert([
         'notif_type' => "Submitted to Dean",
         'class_id' => $classID,
@@ -1227,16 +1230,19 @@ public function submitToDean(Request $request)
         'class_descriptive_title' => $class->descriptive_title,
         'added_by_id' => $submitter->studentID,
         'added_by_name' => $submitter->name,
-        'target_by_id' => $dean->studentID ?? null,
-        'target_by_name' => $dean->name ?? null,
+        'target_by_id' => $dean->studentID,
+        'target_by_name' => $dean->name,
         'status_from_added' => 'unchecked',
         'status_from_target' => 'unchecked',
         'created_at' => now(),
         'updated_at' => now(),
     ]);
-return redirect(url()->previous() . '#' . $department)
-    ->with('success', "Grades were submitted to Dean successfully!");
+
+    // Refresh the same page and scroll to the department section
+    return redirect()->back()->with('success', "Grades were submitted to Dean successfully!#{$department}");
 }
+
+
 
 public function deanDecision(Request $request)
 {

@@ -79,6 +79,8 @@
 
     {{-- Add Student Icon --}}
     <div class="student-main-container">
+    {{-- Check if logged in instructor is the one who added the class --}}
+    @if(auth()->user()->name === $classes->added_by)
         <div class="iconBtbn" onclick="openAddStudentModal()">
             <span class="fa-stack fa-2x iconBtn">
                 <i class="fa-solid fa-circle fa-stack-2x circle-bg"></i>
@@ -91,60 +93,58 @@
         @if(!$hasLockedAndSubmitted)
         <div class="student-wrapper">
             <form method="POST" action="{{ route('class.bulkRemove', $classes->id) }}">
-    @csrf
+            @csrf
 
-    <table class="student-table-container">
-        <thead>
-            <tr>
-                <th>
-                    <input type="checkbox" id="select-all"> Select All
-                </th>
-                <th>Student ID</th>
-                <th>Name</th>
-                <th>Gender</th>
-                <th>Email</th>
-                <th>Department</th>
-                <th>Action</th>
-            </tr>
-        </thead>
+            <table class="student-table-container">
+                <thead>
+                    <tr>
+                        <th>
+                            <input type="checkbox" id="select-all"> Select All
+                        </th>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
 
-        <tbody>
-        @foreach ($classes_student as $student)
-            <tr>
-                <td>
-                    <input type="checkbox"
-                           class="student-checkbox"
-                           name="selected_students[]"
-                           value="{{ $student->studentID }}">
-                </td>
-                <td>{{ $student->studentID }}</td>
-                <td>{{ $student->name }}</td>
-                <td>{{ $student->gender }}</td>
-                <td>{{ $student->email }}</td>
-                <td>{{ $student->department }}</td>
-                <td>
-                    <i class="fa-solid fa-trash delete-single"
-                       style="cursor:pointer;color:red;"
-                       data-remove-url="{{ route('class.remove', [$classes->id, $student->studentID]) }}"></i>
-                </td>
-            </tr>
-        @endforeach
+                <tbody>
+                @foreach ($classes_student as $student)
+                    <tr>
+                        <td>
+                            <input type="checkbox"
+                                class="student-checkbox"
+                                name="selected_students[]"
+                                value="{{ $student->studentID }}">
+                        </td>
+                        <td>{{ $student->studentID }}</td>
+                        <td>{{ $student->name }}</td>
+                        <td>{{ $student->gender }}</td>
+                        <td>{{ $student->email }}</td>
+                        <td>{{ $student->department }}</td>
+                        <td>
+                            <i class="fa-solid fa-trash delete-single"
+                            style="cursor:pointer;color:red;"
+                            data-remove-url="{{ route('class.remove', [$classes->id, $student->studentID]) }}"></i>
+                        </td>
+                    </tr>
+                @endforeach
 
-        {{-- BULK DELETE ROW --}}
-        <tr id="bulk-delete-row" style="display:none;">
-            <td colspan="7" style="text-align:right;">
-                <button type="submit"
-                        class="delete-selected"
-                        style="background:none;border:none;color:red;cursor:pointer;">
-                    <i class="fa-solid fa-trash"></i> Delete Selected
-                </button>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</form>
-
-
+                {{-- BULK DELETE ROW --}}
+                <tr id="bulk-delete-row" style="display:none;">
+                    <td colspan="7" style="text-align:right;">
+                        <button type="submit"
+                                class="delete-selected"
+                                style="background:none;border:none;color:red;cursor:pointer;">
+                            <i class="fa-solid fa-trash"></i> Delete Selected
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            </form>
         </div>
 
         {{-- Single Delete Form --}}
@@ -153,143 +153,145 @@
             @method('POST')
         </form>
         @endif
-    </div>
+    @endif
+</div>
 
-    {{-- Student Grades --}}
-    <div class="student-grades-container">
+
+        {{-- Student Grades --}}
+        <div class="student-grades-container">
         <div class="student-grades-header">
             <h2>Student Grades</h2>
         </div>
 
-    @php
-$groupedByDepartment = $filteredStudents->groupBy('department');
-$user = Auth::user();
-$userRoles = explode(',', $user->role);
-$isDean = in_array('dean', $userRoles);
-$isRegistrar = in_array('registrar', $userRoles);
+            @php
+        $groupedByDepartment = $filteredStudents->groupBy('department');
+        $user = Auth::user();
+        $userRoles = explode(',', $user->role);
+        $isDean = in_array('dean', $userRoles);
+        $isRegistrar = in_array('registrar', $userRoles);
 
-$educationGroups = [
-    'Bachelor of Science in Education',
-    'Bachelor of Elementary Education',
-    'Bachelor of Secondary Education',
-    'Education Major in Math',
-    'Education Major in English',
-    'BEED',
-    'BSED',
-];
+        $educationGroups = [
+            'Bachelor of Science in Education',
+            'Bachelor of Elementary Education',
+            'Bachelor of Secondary Education',
+            'Education Major in Math',
+            'Education Major in English',
+            'BEED',
+            'BSED',
+        ];
 
-$financeAndOpsGroups = [
-    'Bachelor of Science in Business Administration',
-    'Bachelor of Science in Financial Management',
-    'Bachelor of Science in Operating Management'
-];
+        $financeAndOpsGroups = [
+            'Bachelor of Science in Business Administration',
+            'Bachelor of Science in Financial Management',
+            'Bachelor of Science in Operating Management'
+        ];
 
-$deptColors = [
-    'Bachelor of Science in Computer Science' => 'green',
-    'Bachelor of Science in Business Administration' => 'rgb(238, 191, 0)',
-    'Bachelor of Arts in English Language Studies' => 'red',
-    'Bachelor of Science in Education' => 'blue',
-    'Bachelor of Science in Criminology' => 'violet',
-    'Bachelor of Science in Social Work' => '#FF7F7F',
-    'Education' => 'blue',
-    'Bachelor of Science in Financial Management' => '#FFA500', // orange
-    'Bachelor of Science in Operating Management' => '#1E90FF', // dodgerblue
-    'Finance & Operations' => '#FFD700', // optional color
-];
+        $deptColors = [
+            'Bachelor of Science in Computer Science' => 'green',
+            'Bachelor of Science in Business Administration' => 'rgb(238, 191, 0)',
+            'Bachelor of Arts in English Language Studies' => 'red',
+            'Bachelor of Science in Education' => 'blue',
+            'Bachelor of Science in Criminology' => 'violet',
+            'Bachelor of Science in Social Work' => '#FF7F7F',
+            'Education' => 'blue',
+            'Bachelor of Science in Financial Management' => '#FFA500', // orange
+            'Bachelor of Science in Operating Management' => '#1E90FF', // dodgerblue
+            'Finance & Operations' => '#FFD700', // optional color
+        ];
 
-// Map dean to the departments they can approve
-$deanVisibleDepartments = [];
+        // Map dean to the departments they can approve
+        $deanVisibleDepartments = [];
 
-if ($user->department === 'Bachelor of Science in Education') {
-    $deanVisibleDepartments = ['Education'];
-} elseif ($user->department === 'Bachelor of Science in Business Administration') {
-    $deanVisibleDepartments = ['Bachelor of Science in Business Administration', 'Finance & Operations'];
-} else {
-    $deanVisibleDepartments = [$user->department];
-}
-@endphp
+        if ($user->department === 'Bachelor of Science in Education') {
+            $deanVisibleDepartments = ['Education'];
+        } elseif ($user->department === 'Bachelor of Science in Business Administration') {
+            $deanVisibleDepartments = ['Bachelor of Science in Business Administration', 'Finance & Operations'];
+        } else {
+            $deanVisibleDepartments = [$user->department];
+        }
+        @endphp
 
-@foreach($groupedByDepartment as $dept => $studentsGroup)
-    @php
-        // Normalize department grouping
-        $normalizedDept = in_array($dept, $educationGroups) ? 'Education' 
-                        : (in_array($dept, $financeAndOpsGroups) ? 'Finance & Operations' : $dept);
-        $deptColor = $deptColors[$dept] ?? ($deptColors[$normalizedDept] ?? 'black');
+        @foreach($groupedByDepartment as $dept => $studentsGroup)
+            @php
+                // Normalize department grouping
+                $normalizedDept = in_array($dept, $educationGroups) ? 'Education' 
+                                : (in_array($dept, $financeAndOpsGroups) ? 'Finance & Operations' : $dept);
+                $deptColor = $deptColors[$dept] ?? ($deptColors[$normalizedDept] ?? 'black');
 
-        // Check if logged-in dean can approve this department
-        $sameDept = in_array($normalizedDept, $deanVisibleDepartments);
+                // Check if logged-in dean can approve this department
+                $sameDept = in_array($normalizedDept, $deanVisibleDepartments);
 
-        $deptGrades = $finalGrades->whereIn('studentID', $studentsGroup->pluck('studentID')->map(fn($id) => (string)$id)->toArray());
-        $departmentsToSubmit = ($normalizedDept === 'Education') ? $educationGroups 
-                            : (($normalizedDept === 'Finance & Operations') ? $financeAndOpsGroups : [$normalizedDept]);
+                $deptGrades = $finalGrades->whereIn('studentID', $studentsGroup->pluck('studentID')->map(fn($id) => (string)$id)->toArray());
+                $departmentsToSubmit = ($normalizedDept === 'Education') ? $educationGroups 
+                                    : (($normalizedDept === 'Finance & Operations') ? $financeAndOpsGroups : [$normalizedDept]);
 
-        $allLocked = $deptGrades->every(fn($g) => $g->status === 'Locked');
-        $allSubmitted = $deptGrades->every(fn($g) => $g->submit_status === 'Submitted');
-        $showGradesTable = $allLocked && $allSubmitted;
+                $allLocked = $deptGrades->every(fn($g) => $g->status === 'Locked');
+                $allSubmitted = $deptGrades->every(fn($g) => $g->submit_status === 'Submitted');
+                $showGradesTable = $allLocked && $allSubmitted;
 
-        $allDeanApproved = $deptGrades->every(fn($g) => $g->dean_status === 'Confirmed');
-        $hasRegistrarActionable = $deptGrades->contains(fn($g) => is_null($g->registrar_status));
-        $showRegistrarSubmit = $isDean && $sameDept && $showGradesTable && $allDeanApproved && $hasRegistrarActionable;
+                $allDeanApproved = $deptGrades->every(fn($g) => $g->dean_status === 'Confirmed');
+                $hasRegistrarActionable = $deptGrades->contains(fn($g) => is_null($g->registrar_status));
+                $showRegistrarSubmit = $isDean && $sameDept && $showGradesTable && $allDeanApproved && $hasRegistrarActionable;
 
-        $pendingDeptApproval = $deptGrades->filter(fn($g) => is_null($g->dean_status) || $g->dean_status === 'Rejected')->count() > 0;
-        $showDeanButtons = $isDean && $sameDept && $pendingDeptApproval;
+                $pendingDeptApproval = $deptGrades->filter(fn($g) => is_null($g->dean_status) || $g->dean_status === 'Rejected')->count() > 0;
+                $showDeanButtons = $isDean && $sameDept && $pendingDeptApproval;
 
-        $hasPendingRegistrar = $deptGrades->contains(fn($g) => $g->registrar_status === 'Pending');
-        $showRegistrarDecision = $isRegistrar && $hasPendingRegistrar;
+                $hasPendingRegistrar = $deptGrades->contains(fn($g) => $g->registrar_status === 'Pending');
+                $showRegistrarDecision = $isRegistrar && $hasPendingRegistrar;
 
-        $firstGrade = $deptGrades->first();
-    @endphp
+                $firstGrade = $deptGrades->first();
+            @endphp
 
-    {{-- Department Header --}}
-    <div class="student-grades-m-container">
-        <h3 class="student-department-header" style="color: {{ $deptColor }};">{{ $dept }}</h3>
-    </div>
+                    {{-- Department Header --}}
+                    <div class="student-grades-m-container">
+                        <h3 class="student-department-header" style="color: {{ $deptColor }};">{{ $dept }}</h3>
+                    </div>
 
-    {{-- Status Display --}}
-    <div class="status-container">
-        <span class="status-span">Status: {{ $firstGrade->status ?? '-' }}</span>
-        <span class="status-span">Submit to Dean Status: {{ $firstGrade->submit_status ?? '-' }}</span>
-        <span class="status-span">Dean Approval: {{ $firstGrade->dean_status ?? '-' }}</span>
-        <span class="status-span">Registrar Approval: {{ $firstGrade->registrar_status ?? '-' }}</span>
-    </div>
+                    {{-- Status Display --}}
+                    <div class="status-container">
+                        <span class="status-span">Status: {{ $firstGrade->status ?? '-' }}</span>
+                        <span class="status-span">Submit to Dean Status: {{ $firstGrade->submit_status ?? '-' }}</span>
+                        <span class="status-span">Dean Approval: {{ $firstGrade->dean_status ?? '-' }}</span>
+                        <span class="status-span">Registrar Approval: {{ $firstGrade->registrar_status ?? '-' }}</span>
+                    </div>
 
-    {{-- Grades Table --}}
-    @if($showGradesTable)
-        <div class="student-grades-wrapper">
-            <table class="student-grades-table-container">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Department</th>
-                        <th>Prelim</th>
-                        <th>Mid-Term</th>
-                        <th>Semi Finals</th>
-                        <th>Finals</th>
-                        <th>Remarks</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($studentsGroup as $student)
-                        @php $grade = $deptGrades->firstWhere('studentID', $student->studentID); @endphp
-                        <tr>
-                            <td>{{ $student->name }}</td>
-                            <td>{{ $student->department }}</td>
-                            <td>{{ $grade->prelim ?? '-' }}</td>
-                            <td>{{ $grade->midterm ?? '-' }}</td>
-                            <td>{{ $grade->semi_finals ?? '-' }}</td>
-                            <td>{{ $grade->final ?? '-' }}</td>
-                            <td>{{ $grade->remarks ?? '-' }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    @else
-        <p style="color:gray; font-style:italic; margin-top:10px;">
-            Grades are not yet locked and submitted for this department.
-        </p>
-    @endif
-@if($showDeanButtons)
+                    {{-- Grades Table --}}
+                    @if($showGradesTable)
+                        <div class="student-grades-wrapper">
+                            <table class="student-grades-table-container">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Department</th>
+                                        <th>Prelim</th>
+                                        <th>Mid-Term</th>
+                                        <th>Semi Finals</th>
+                                        <th>Finals</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($studentsGroup as $student)
+                                        @php $grade = $deptGrades->firstWhere('studentID', $student->studentID); @endphp
+                                        <tr>
+                                            <td>{{ $student->name }}</td>
+                                            <td>{{ $student->department }}</td>
+                                            <td>{{ $grade->prelim ?? '-' }}</td>
+                                            <td>{{ $grade->midterm ?? '-' }}</td>
+                                            <td>{{ $grade->semi_finals ?? '-' }}</td>
+                                            <td>{{ $grade->final ?? '-' }}</td>
+                                            <td>{{ $grade->remarks ?? '-' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <p style="color:gray; font-style:italic; margin-top:10px;">
+                            Grades are not yet locked and submitted for this department.
+                        </p>
+                    @endif
+                @if($showDeanButtons)
                 <p class="decision-header">Dean's Decision for: {{ $dept }}</p>
                 <div class="decisionBtn-container">
                     <form method="POST" action="{{ route('dean.decision') }}">
