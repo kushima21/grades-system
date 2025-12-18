@@ -1,7 +1,11 @@
 @extends('layouts.default')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
 @vite(['resources/css/grading_view.css', 'resources/js/app.js'])
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+@php
+    $activeTerm = session('active_term');
+@endphp
 @section('content')
 <div class="grading-view-main-container">
 
@@ -45,76 +49,108 @@
         </div>
 
         {{-- ================= GRADING FORMS ================= --}}
-        @foreach ($terms as $term)
-        <div class="grading-form grading-form-{{ $term }}" style="display:none;">
-            <h2 class="grading-h">Grading - {{ $term }}</h2>
-            <div class="border-grading-form">
-                <form action="{{ route('grading_view.addPercentageAndScores', ['class' => $class]) }}"
-                      method="POST" id="gradingForm-{{ $term }}">
-                    @csrf
-                    @method('PUT')
-                    <input type="hidden" name="periodic_term" value="{{ $term }}">
+       @foreach ($terms as $term)
+<div class="grading-form grading-form-{{ $term }}"
+     style="{{ $activeTerm === $term ? 'display:block;' : 'display:none;' }}">
 
-                    <div class="table-grading-form-box">
-                        <div class="grading-setup">
+    <h2 class="grading-h">Grading - {{ $term }}</h2>
 
-                            {{-- Quizzes --}}
-                            <div class="grading-item">
-                                <h4>Quizzes</h4>
-                                <label>Percentage (%)</label>
-                                <input type="number" step="0.01" name="quiz_percentage"
-                                    value="{{ $percentage[$term]->quiz_percentage ?? 0 }}">
-                                <label>Total Score</label>
-                                <input type="number" step="0.01" name="quiz_total_score"
-                                    value="{{ $percentage[$term]->quiz_total_score ?? 0 }}">
-                            </div>
+    <div class="border-grading-form">
+        <form action="{{ route('grading_view.addPercentageAndScores', ['class' => $class]) }}"
+              method="POST" id="gradingForm-{{ $term }}">
+            @csrf
+            @method('PUT')
 
-                            {{-- Attendance/Behavior --}}
-                            <div class="grading-item">
-                                <h4>Attendance/Behavior</h4>
-                                <label>Percentage (%)</label>
-                                <input type="number" step="0.01" name="attendance_percentage"
-                                    value="{{ $percentage[$term]->attendance_percentage ?? 0 }}">
-                                <label>Total Score</label>
-                                <input type="number" step="0.01" name="attendance_total_score"
-                                    value="{{ $percentage[$term]->attendance_total_score ?? 0 }}">
-                            </div>
+            <input type="hidden" name="periodic_term" value="{{ $term }}">
 
-                            {{-- Assignments/Participation/Project --}}
-                            <div class="grading-item">
-                                <h4>Assignments/Participation/Project</h4>
-                                <label>Percentage (%)</label>
-                                <input type="number" name="assignment_percentage"
-                                       value="{{ $percentage[$term]->assignment_percentage ?? 0 }}">
-                                <label>Total Score</label>
-                                <input type="number" name="assignment_total_score"
-                                       value="{{ $percentage[$term]->assignment_total_score ?? 0 }}">
-                            </div>
+            <div class="table-grading-form-box">
+                <div class="grading-setup">
 
-                            {{-- Exam --}}
-                            <div class="grading-item">
-                                <h4>Exam</h4>
-                                <label>Percentage (%)</label>
-                                <input type="number" name="exam_percentage"
-                                       value="{{ $percentage[$term]->exam_percentage ?? 0 }}">
-                                <label>Total Score</label>
-                                <input type="number" name="exam_total_score"
-                                       value="{{ $percentage[$term]->exam_total_score ?? 0 }}">
-                            </div>
+                    {{-- QUIZZES --}}
+                    <div class="grading-item">
+                        <h4>Quizzes</h4>
+                        <label>Percentage (%)</label>
+                        <input type="number" step="0.01" name="quiz_percentage"
+                               value="{{ $percentage[$term]->quiz_percentage ?? 0 }}">
 
-                        </div>
-
-                        <button type="submit" class="save-btn">💾 Save Grading and Total Score</button>
-                        <button type="button" class="save-btn" onclick="saveAllDefaults('{{ $term }}')">
-                            💾 Save Default All
-                        </button>
-                        <p class="note">⚠ Save first before entering student scores.</p>
+                        <label>Total Score</label>
+                        <input type="number" step="0.01" name="quiz_total_score"
+                               value="{{ $percentage[$term]->quiz_total_score ?? 0 }}">
                     </div>
-                </form>
-            </div>
-        </div>
-        @endforeach
 
+                    {{-- ATTENDANCE --}}
+                    <div class="grading-item">
+                        <h4>Attendance / Behavior</h4>
+                        <label>Percentage (%)</label>
+                        <input type="number" step="0.01" name="attendance_percentage"
+                               value="{{ $percentage[$term]->attendance_percentage ?? 0 }}">
+
+                        <label>Total Score</label>
+                        <input type="number" step="0.01" name="attendance_total_score"
+                               value="{{ $percentage[$term]->attendance_total_score ?? 0 }}">
+                    </div>
+
+                    {{-- ASSIGNMENTS --}}
+                    <div class="grading-item">
+                        <h4>Assignments / Participation / Project</h4>
+                        <label>Percentage (%)</label>
+                        <input type="number" name="assignment_percentage"
+                               value="{{ $percentage[$term]->assignment_percentage ?? 0 }}">
+
+                        <label>Total Score</label>
+                        <input type="number" name="assignment_total_score"
+                               value="{{ $percentage[$term]->assignment_total_score ?? 0 }}">
+                    </div>
+
+                    {{-- EXAM --}}
+                    <div class="grading-item">
+                        <h4>Exam</h4>
+                        <label>Percentage (%)</label>
+                        <input type="number" name="exam_percentage"
+                               value="{{ $percentage[$term]->exam_percentage ?? 0 }}">
+
+                        <label>Total Score</label>
+                        <input type="number" name="exam_total_score"
+                               value="{{ $percentage[$term]->exam_total_score ?? 0 }}">
+                    </div>
+
+                </div>
+
+                <button type="submit" class="save-btn">
+                    💾 Save Grading and Total Score
+                </button>
+
+                <button type="submit" name="save_all" value="1" class="save-btn">
+                    💾 Save Default All
+                </button>
+
+                <p class="note">⚠ Save first before entering student scores.</p>
+            </div>
+        </form>
+    </div>
+</div>
+@endforeach
+
+@if(session('swal_error'))
+<script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Invalid Percentage',
+        text: @json(session('swal_error')),
+        confirmButtonColor: '#d33'
+    });
+</script>
+@endif
+@if(session('swal_error'))
+<script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Invalid Score Input',
+        text: @json(session('swal_error')),
+        confirmButtonColor: '#d33'
+    });
+</script>
+@endif
         {{-- ================= STUDENT LIST ================= --}}
         <h2 class="student-list">Student List</h2>
         <div class="border-student-list">

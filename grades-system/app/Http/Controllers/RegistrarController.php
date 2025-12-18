@@ -560,74 +560,93 @@ public function bulkRemoveStudents(Request $request, $class)
         ->with("success", count($studentIDs) . " student(s) removed successfully.");
 }
 
-
 public function addPercentageAndScores(Request $request, $class)
 {
     $warnings = [];
 
     // Same inputs for all terms
     $inputData = [
-        'quiz_percentage'       => $request->input("quiz_percentage") ?? 0,
-        'quiz_total_score'      => $request->input("quiz_total_score") ?? 0,
-        'attendance_percentage' => $request->input("attendance_percentage") ?? 0,
-        'attendance_total_score'=> $request->input("attendance_total_score") ?? 0,
-        'assignment_percentage' => $request->input("assignment_percentage") ?? 0,
-        'assignment_total_score'=> $request->input("assignment_total_score") ?? 0,
-        'exam_percentage'       => $request->input("exam_percentage") ?? 0,
-        'exam_total_score'      => $request->input("exam_total_score") ?? 0,
+        'quiz_percentage'        => $request->input('quiz_percentage') ?? 0,
+        'quiz_total_score'       => $request->input('quiz_total_score') ?? 0,
+        'attendance_percentage'  => $request->input('attendance_percentage') ?? 0,
+        'attendance_total_score' => $request->input('attendance_total_score') ?? 0,
+        'assignment_percentage'  => $request->input('assignment_percentage') ?? 0,
+        'assignment_total_score' => $request->input('assignment_total_score') ?? 0,
+        'exam_percentage'        => $request->input('exam_percentage') ?? 0,
+        'exam_total_score'       => $request->input('exam_total_score') ?? 0,
     ];
 
-    // check percentage total (para dili kaayohan og loop)
-    $totalPercentage = $inputData['quiz_percentage'] + $inputData['attendance_percentage'] +
-                       $inputData['assignment_percentage'] + $inputData['exam_percentage'];
+    // ✅ Check total percentage
+ // ✅ Check total percentage
+$totalPercentage =
+    $inputData['quiz_percentage'] +
+    $inputData['attendance_percentage'] +
+    $inputData['assignment_percentage'] +
+    $inputData['exam_percentage'];
 
-    if ($totalPercentage != 100) {
-        return redirect()->route("instructor.grading_view", $class)
-            ->withErrors(["The total percentage must equal 100%."]);
-    }
+if ($totalPercentage > 100) {
+    return redirect()->back()
+        ->with('swal_error', '❌ Total percentage exceeded 100%! Please adjust your grading percentages.')
+        ->with('active_term', $request->periodic_term);
+}
 
-    // kung gi–click ang "Save Default All"
+if ($totalPercentage < 100) {
+    return redirect()->back()
+        ->with('swal_error', '⚠️ Total percentage must be exactly 100%.')
+        ->with('active_term', $request->periodic_term);
+}
+
+    // =====================================================
+    // ✅ SAVE DEFAULT FOR ALL TERMS
+    // =====================================================
     if ($request->has('save_all')) {
+
         $terms = ['Prelim', 'Midterm', 'Semi-Finals', 'Finals'];
 
         foreach ($terms as $term) {
-            // warnings check per term
+
             foreach (['quiz', 'attendance', 'assignment', 'exam'] as $category) {
                 $totalScore = $inputData["{$category}_total_score"];
+
                 $scoreExists = DB::table('transmuted_grade')
                     ->where('score_bracket', $totalScore)
                     ->exists();
 
                 if (!$scoreExists) {
-                    $warnings[] = "⚠️ WARNING! The total score of $totalScore for " . ucfirst($category) .
-                        " in $term does not exist in the database.";
+                    $warnings[] =
+                        "⚠️ WARNING! The total score of $totalScore for "
+                        . ucfirst($category) . " in $term does not exist in the database.";
                 }
             }
 
-            // save per term
             Percentage::updateOrCreate(
                 ['classID' => $class, 'periodic_term' => $term],
                 $inputData
             );
         }
 
-        return redirect()->route("instructor.grading_view", $class)
+        return redirect()->back()
             ->with('success', 'Default grading saved for all terms.')
-            ->with('warnings', $warnings);
+            ->with('warnings', $warnings)
+            ->with('active_term', $request->periodic_term);
     }
 
-    // else: save for one specific term only
+    // =====================================================
+    // ✅ SAVE FOR SINGLE TERM
+    // =====================================================
     $term = $request->input('periodic_term');
 
     foreach (['quiz', 'attendance', 'assignment', 'exam'] as $category) {
         $totalScore = $inputData["{$category}_total_score"];
+
         $scoreExists = DB::table('transmuted_grade')
             ->where('score_bracket', $totalScore)
             ->exists();
 
         if (!$scoreExists) {
-            $warnings[] = "⚠️ WARNING! The total score of $totalScore for " . ucfirst($category) .
-                " in $term does not exist in the database.";
+            $warnings[] =
+                "⚠️ WARNING! The total score of $totalScore for "
+                . ucfirst($category) . " in $term does not exist in the database.";
         }
     }
 
@@ -636,13 +655,12 @@ public function addPercentageAndScores(Request $request, $class)
         $inputData
     );
 
-   return redirect()->route('instructor.grading_view', [
-    'id' => $class->id,
-    'academic_period' => $class->academic_period
-])->with('success', "Data saved successfully for $term.")
-  ->with('warnings', $warnings);
-
+    return redirect()->back()
+        ->with('success', "Data saved successfully for $term.")
+        ->with('warnings', $warnings)
+        ->with('active_term', $term);
 }
+
 
 
 
@@ -676,19 +694,31 @@ public function addQuizAndScore(Request $request, $class)
 
         $studentName = $classStudent->name ?? "Student ID $studentId";
 
-        // VALIDATIONS
-        if (($fields['quizzez'] ?? 0) > $percentage->quiz_total_score) {
-            return redirect()->back()->with('error', "Quiz score for {$studentName} exceeds total.");
-        }
-        if (($fields['attendance_behavior'] ?? 0) > $percentage->attendance_total_score) {
-            return redirect()->back()->with('error', "Attendance score for {$studentName} exceeds total.");
-        }
-        if (($fields['assignments'] ?? 0) > $percentage->assignment_total_score) {
-            return redirect()->back()->with('error', "Assignment score for {$studentName} exceeds total.");
-        }
-        if (($fields['exam'] ?? 0) > $percentage->exam_total_score) {
-            return redirect()->back()->with('error', "Exam score for {$studentName} exceeds total.");
-        }
+   // VALIDATIONS
+if (($fields['quizzez'] ?? 0) > $percentage->quiz_total_score) {
+    return redirect()->back()
+        ->with('swal_error', "Quiz score of {$studentName} exceeds the total score ({$percentage->quiz_total_score}).")
+        ->with('active_term', $periodicTerm);
+}
+
+if (($fields['attendance_behavior'] ?? 0) > $percentage->attendance_total_score) {
+    return redirect()->back()
+        ->with('swal_error', "Attendance score of {$studentName} exceeds the total score ({$percentage->attendance_total_score}).")
+        ->with('active_term', $periodicTerm);
+}
+
+if (($fields['assignments'] ?? 0) > $percentage->assignment_total_score) {
+    return redirect()->back()
+        ->with('swal_error', "Assignment score of {$studentName} exceeds the total score ({$percentage->assignment_total_score}).")
+        ->with('active_term', $periodicTerm);
+}
+
+if (($fields['exam'] ?? 0) > $percentage->exam_total_score) {
+    return redirect()->back()
+        ->with('swal_error', "Exam score of {$studentName} exceeds the total score ({$percentage->exam_total_score}).")
+        ->with('active_term', $periodicTerm);
+}
+
 
         // SAVE QUIZZES AND SCORES
         QuizzesAndScores::updateOrCreate(
