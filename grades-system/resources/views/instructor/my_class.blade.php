@@ -39,12 +39,19 @@
                         <br>
                         <span>{{ $class->program }}</span>
                     </div>
-                    <div class="bottom-c">
+                   <div class="bottom-c">
                         <span>Instructor: {{ $class->instructor }}</span>
-                        <a href="{{ route('class.show', $class->id) }}" class="icon view-icon" data-tooltip="View">
+
+                        <a href="{{ route('class.show', [
+                                'class' => $class->id,
+                                'academic_period' => $class->academic_period
+                            ]) }}"
+                        class="icon view-icon"
+                        data-tooltip="View">
                             <i class="fa-solid fa-right-from-bracket"></i>
                         </a>
                     </div>
+
                 </div>
             @endforeach
         </div>

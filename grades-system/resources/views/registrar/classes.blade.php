@@ -26,30 +26,30 @@
                 Create New Class
             </h2>
             {{-- SUCCESS --}}
-@if(session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
-@endif
+            @if(session('success'))
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                </div>
+            @endif
 
-{{-- MAIN ERROR --}}
-@if(session('error'))
-    <div class="alert alert-danger">
-        {{ session('error') }}
-    </div>
-@endif
+            {{-- MAIN ERROR --}}
+            @if(session('error'))
+                <div class="alert alert-danger">
+                    {{ session('error') }}
+                </div>
+            @endif
 
-{{-- CSV ROW ERRORS --}}
-@if(session('errors_csv'))
-    <div class="alert alert-warning">
-        <strong>CSV Errors:</strong>
-        <ul>
-            @foreach(session('errors_csv') as $err)
-                <li>{{ $err }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
+            {{-- CSV ROW ERRORS --}}
+            @if(session('errors_csv'))
+                <div class="alert alert-warning">
+                    <strong>CSV Errors:</strong>
+                    <ul>
+                        @foreach(session('errors_csv') as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             <div class="multipleClasses">
                 <form method="POST" action="{{ route('classes.bulkUpload') }}" enctype="multipart/form-data">
                     @csrf

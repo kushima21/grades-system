@@ -328,3 +328,11 @@
 .view-icon i {
     color: rgb(225, 54, 2);
 }
+
+.btn {
+    width: 98%;
+    display: flex;
+    justify-content: right;
+    font-size: 12px;
+    color: black;
+}
