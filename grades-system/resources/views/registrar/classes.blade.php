@@ -20,20 +20,48 @@
                 <input type="text" name="searchClass" id="searchClass" placeholder="Quick Search...">
             </form>
         </div>
+          <a href="{{ route('download.csv') }}" class="btn"><i class="fa fa-download"></i> Download CSV</a>
         <div class="classes-modal-container" id="classesModal">
             <h2 class="classes-modal-header">
                 Create New Class
             </h2>
+            {{-- SUCCESS --}}
+@if(session('success'))
+    <div class="alert alert-success">
+        {{ session('success') }}
+    </div>
+@endif
+
+{{-- MAIN ERROR --}}
+@if(session('error'))
+    <div class="alert alert-danger">
+        {{ session('error') }}
+    </div>
+@endif
+
+{{-- CSV ROW ERRORS --}}
+@if(session('errors_csv'))
+    <div class="alert alert-warning">
+        <strong>CSV Errors:</strong>
+        <ul>
+            @foreach(session('errors_csv') as $err)
+                <li>{{ $err }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
             <div class="multipleClasses">
-                <form method="POST" action="">
+                <form method="POST" action="{{ route('classes.bulkUpload') }}" enctype="multipart/form-data">
                     @csrf
-                    <input type="file" name="class_file" id="class_file" accept=".csv">
-                    <button type="submit" class="classFileBtn">
-                       <i class="fa-solid fa-file-arrow-up"></i>Add Multiple Classes
+                    <input type="file" name="class_file" id="class_file" accept=".csv" required>
+                     <input type="hidden" name="added_by" value="{{ Auth::user()->name ?? 'Test User' }}">
+                    <button type="submit" name="submit" class="classFileBtn">
+                        <i class="fa-solid fa-file-arrow-up"></i> Add Multiple Classes
                     </button>
                 </form>
-                 <p class="csv-p">or add student individually</p>
+                <p class="csv-p">or add class individually</p>
             </div>
+
             <div class="classes-form-container">
                <form id="classForm" method="POST" action="{{ route('classes.create') }}">
                 @csrf

@@ -212,8 +212,11 @@ Route::post('/registrar-submit-grades', [RegistrarController::class, 'SubmitGrad
 Route::post('/class/{class}/import-csv', [RegistrarController::class, 'importCSV'])
     ->name('class.importcsv');
 
+Route::post('/classes/bulk-upload', [RegistrarController::class, 'bulkCreateClasses'])
+    ->name('classes.bulkUpload');
 
-
+Route::get('/download-csv', [RegistrarController::class, 'downloadCSV'])->name('download.csv');
+Route::get('/csv-page', [RegistrarController::class, 'showCSVPage'])->name('csv.page');
 // Registrar Decision Route
 Route::post('/registrar/decision', 
     [App\Http\Controllers\RegistrarController::class, 'submitDecisionRegistrar']

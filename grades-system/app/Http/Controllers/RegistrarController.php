@@ -131,6 +131,117 @@ public function CreateClass(Request $request)
 
     return redirect(route("registrar_classes"))->withInput()->with("error", "Class Creation Failed");
 }
+public function bulkCreateClasses(Request $request)
+{
+    $request->validate([
+        'class_file' => 'required|mimes:csv,txt|max:2048'
+    ]);
+
+    $user = Auth::user();
+    $file = $request->file('class_file');
+    $handle = fopen($file, 'r');
+
+    if (!$handle) {
+        return back()->with('error', 'Unable to read CSV file.');
+    }
+
+    fgetcsv($handle); // skip header
+
+    $successCount = 0;
+    $errorRows = [];
+    $rowNumber = 1;
+
+    while (($row = fgetcsv($handle, 1000, ",")) !== false) {
+        $rowNumber++;
+
+        if (count($row) !== 8) {
+            $errorRows[] = "Row {$rowNumber}: Invalid column count (Expected 8, got " . count($row) . ")";
+            continue;
+        }
+
+        [
+            $course_no,
+            $units,
+            $instructorName,
+            $academic_period,
+            $academic_year,
+            $schedule,
+            $program,
+            $status
+        ] = $row;
+
+        $course_no = strtoupper(trim($course_no));
+        $instructorName = trim($instructorName);
+
+        // COURSE CHECK
+        $course = Course::where('course_no', $course_no)->first();
+        if (!$course) {
+            $errorRows[] = "Row {$rowNumber}: Course not found ({$course_no})";
+            continue;
+        }
+
+        // INSTRUCTOR CHECK
+        $instructor = User::whereRaw(
+            'LOWER(TRIM(name)) = ?',
+            [strtolower($instructorName)]
+        )->first();
+
+        if (!$instructor) {
+            $errorRows[] = "Row {$rowNumber}: Instructor not found ({$instructorName})";
+            continue;
+        }
+
+        try {
+            $class = new Classes();
+            $class->course_no = $course_no;
+            $class->descriptive_title = $course->descriptive_title;
+            $class->units = (int) $units;
+            $class->instructor = $instructor->name;
+            $class->academic_period = trim($academic_period);
+            $class->academic_year = trim($academic_year);
+            $class->schedule = trim($schedule);
+            $class->program = trim($program);
+            $class->status = trim($status);
+            $class->added_by = $user->name;
+            $class->save();
+
+            $successCount++;
+
+        } catch (\Exception $e) {
+            $errorRows[] = "Row {$rowNumber}: DB error - " . $e->getMessage();
+        }
+    }
+
+    fclose($handle);
+
+    if ($successCount === 0) {
+        return redirect()
+            ->route('registrar_classes')
+            ->with('error', 'No classes were added. Please check your CSV file.')
+            ->with('errors_csv', $errorRows);
+    }
+
+    return redirect()
+        ->route('registrar_classes')
+        ->with('success', "Bulk upload completed: {$successCount} classes added.")
+        ->with('errors_csv', $errorRows);
+}
+
+public function downloadCSV()
+    {
+        $file = public_path('files/bulkClassesTemplate.csv'); // path sa CSV
+
+        if (file_exists($file)) {
+            return response()->download($file, 'bulkClassesTemplate.csv', [
+                'Content-Type' => 'text/csv',
+            ]);
+        } else {
+            return redirect()->back()->with('error', 'File not found.');
+        }
+    }
+
+
+
 
 public function EditClass(Request $request, Classes $class)
 {
