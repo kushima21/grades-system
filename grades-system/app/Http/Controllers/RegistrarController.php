@@ -578,27 +578,33 @@ public function addstudent(Request $request, Classes $class)
     $classStudent->program = $request->program;  // ⭐ NEW LINE – saves program
 
     // Array of periodic terms
-    $periodicTerms = ['Prelim', 'Midterm', 'Semi-Finals', 'Finals'];
+   $periodicTerms = ['Prelim', 'Midterm', 'Semi-Finals', 'Finals'];
+
+// ✅ If academic period is Summer, limit to Prelim & Finals only
+if (strtolower($class->academic_period) === 'summer') {
+    $periodicTerms = ['Prelim', 'Finals'];
+}
 
     // Save the instance of Classes_Student
-    if ($classStudent->save()) {
+// Save the instance of Classes_Student
+if ($classStudent->save()) {
 
-        // Insert a row for each periodic term in quizzes_scores
-        foreach ($periodicTerms as $term) {
-            $quizzesandscores = new QuizzesAndScores();
-            $quizzesandscores->classID = $class->id;
-            $quizzesandscores->studentID = $request->student_id;
-            $quizzesandscores->periodic_term = $term;
-            $quizzesandscores->quizzez = 0;
-            $quizzesandscores->attendance_behavior = 0;
-            $quizzesandscores->assignments = 0;
-            $quizzesandscores->exam = 0;
-            $quizzesandscores->save();
-        }
-
-        return redirect()->route("class.show", $class->id)
-            ->with("success", "Student added successfully.");
+    // Insert a row for each periodic term in quizzes_scores
+    foreach ($periodicTerms as $term) {
+        $quizzesandscores = new QuizzesAndScores();
+        $quizzesandscores->classID = $class->id;
+        $quizzesandscores->studentID = $request->student_id;
+        $quizzesandscores->periodic_term = $term;
+        $quizzesandscores->quizzez = 0;
+        $quizzesandscores->attendance_behavior = 0;
+        $quizzesandscores->assignments = 0;
+        $quizzesandscores->exam = 0;
+        $quizzesandscores->save();
     }
+
+    return redirect()->route("class.show", $class->id)
+        ->with("success", "Student added successfully.");
+}
 
     return redirect()->route("class.show", $class->id)
         ->with("error", "Failed to add student. Please try again.");
@@ -781,57 +787,81 @@ public function addQuizAndScore(Request $request, $class)
     $scores       = $request->input('scores');
     $periodicTerm = $request->input('periodic_term');
 
-    // Get class details
+    /*
+    |--------------------------------------------------------------------------
+    | GET CLASS DETAILS
+    |--------------------------------------------------------------------------
+    */
     $classDetails = Classes::find($class);
     if (!$classDetails) {
         return redirect()->back()->with('error', 'Class not found.');
     }
 
-    // Retrieve percentage info
+    /*
+    |--------------------------------------------------------------------------
+    | GET PERCENTAGE SETTINGS
+    |--------------------------------------------------------------------------
+    */
     $percentage = Percentage::where('classID', $class)
         ->where('periodic_term', $periodicTerm)
         ->first();
+
     if (!$percentage) {
         return redirect()->back()->with('error', 'Percentage data not found for this class.');
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | LOOP STUDENT SCORES
+    |--------------------------------------------------------------------------
+    */
     foreach ($scores as $studentId => $fields) {
 
-        // Get student info
+        // GET STUDENT INFO
         $classStudent = Classes_Student::where('classID', $class)
             ->where('studentID', $studentId)
             ->first();
-        if (!$classStudent) continue;
+
+        if (!$classStudent) {
+            continue;
+        }
 
         $studentName = $classStudent->name ?? "Student ID $studentId";
 
-   // VALIDATIONS
-if (($fields['quizzez'] ?? 0) > $percentage->quiz_total_score) {
-    return redirect()->back()
-        ->with('swal_error', "Quiz score of {$studentName} exceeds the total score ({$percentage->quiz_total_score}).")
-        ->with('active_term', $periodicTerm);
-}
+        /*
+        |--------------------------------------------------------------------------
+        | VALIDATIONS
+        |--------------------------------------------------------------------------
+        */
+        if (($fields['quizzez'] ?? 0) > $percentage->quiz_total_score) {
+            return redirect()->back()
+                ->with('swal_error', "Quiz score of {$studentName} exceeds the total score ({$percentage->quiz_total_score}).")
+                ->with('active_term', $periodicTerm);
+        }
 
-if (($fields['attendance_behavior'] ?? 0) > $percentage->attendance_total_score) {
-    return redirect()->back()
-        ->with('swal_error', "Attendance score of {$studentName} exceeds the total score ({$percentage->attendance_total_score}).")
-        ->with('active_term', $periodicTerm);
-}
+        if (($fields['attendance_behavior'] ?? 0) > $percentage->attendance_total_score) {
+            return redirect()->back()
+                ->with('swal_error', "Attendance score of {$studentName} exceeds the total score ({$percentage->attendance_total_score}).")
+                ->with('active_term', $periodicTerm);
+        }
 
-if (($fields['assignments'] ?? 0) > $percentage->assignment_total_score) {
-    return redirect()->back()
-        ->with('swal_error', "Assignment score of {$studentName} exceeds the total score ({$percentage->assignment_total_score}).")
-        ->with('active_term', $periodicTerm);
-}
+        if (($fields['assignments'] ?? 0) > $percentage->assignment_total_score) {
+            return redirect()->back()
+                ->with('swal_error', "Assignment score of {$studentName} exceeds the total score ({$percentage->assignment_total_score}).")
+                ->with('active_term', $periodicTerm);
+        }
 
-if (($fields['exam'] ?? 0) > $percentage->exam_total_score) {
-    return redirect()->back()
-        ->with('swal_error', "Exam score of {$studentName} exceeds the total score ({$percentage->exam_total_score}).")
-        ->with('active_term', $periodicTerm);
-}
+        if (($fields['exam'] ?? 0) > $percentage->exam_total_score) {
+            return redirect()->back()
+                ->with('swal_error', "Exam score of {$studentName} exceeds the total score ({$percentage->exam_total_score}).")
+                ->with('active_term', $periodicTerm);
+        }
 
-
-        // SAVE QUIZZES AND SCORES
+        /*
+        |--------------------------------------------------------------------------
+        | SAVE QUIZZES AND SCORES
+        |--------------------------------------------------------------------------
+        */
         QuizzesAndScores::updateOrCreate(
             [
                 'classID'       => $class,
@@ -847,7 +877,11 @@ if (($fields['exam'] ?? 0) > $percentage->exam_total_score) {
             ]
         );
 
-        // COMPUTE TRANSMUTED
+        /*
+        |--------------------------------------------------------------------------
+        | TRANSMUTATION & WEIGHTING
+        |--------------------------------------------------------------------------
+        */
         $quizTrans = $this->getTransmutedGrade($fields['quizzez'] ?? 0, $percentage->quiz_total_score);
         $attTrans  = $this->getTransmutedGrade($fields['attendance_behavior'] ?? 0, $percentage->attendance_total_score);
         $assTrans  = $this->getTransmutedGrade($fields['assignments'] ?? 0, $percentage->assignment_total_score);
@@ -860,7 +894,11 @@ if (($fields['exam'] ?? 0) > $percentage->exam_total_score) {
 
         $finalTransmutedGrade = $quizWeighted + $attWeighted + $assWeighted + $examWeighted;
 
-        // MAP COLUMN FOR RAW VALUE
+        /*
+        |--------------------------------------------------------------------------
+        | MAP RAW COLUMN
+        |--------------------------------------------------------------------------
+        */
         $columnToUpdate = match (strtolower($periodicTerm)) {
             'prelim'        => 'prelim',
             'midterm'       => 'midterm_raw',
@@ -868,11 +906,21 @@ if (($fields['exam'] ?? 0) > $percentage->exam_total_score) {
             'finals'        => 'final_raw',
             default         => null,
         };
-        if (!$columnToUpdate) continue;
 
-        // GET OR CREATE RAW GRADE
+        if (!$columnToUpdate) {
+            continue;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | GET OR CREATE RAW GRADE
+        |--------------------------------------------------------------------------
+        */
         $raw = RawGrade::firstOrCreate(
-            ['studentID' => $studentId, 'classID' => $class],
+            [
+                'studentID' => $studentId,
+                'classID'   => $class,
+            ],
             [
                 'course_no'         => $classDetails->course_no,
                 'descriptive_title' => $classDetails->descriptive_title,
@@ -883,27 +931,41 @@ if (($fields['exam'] ?? 0) > $percentage->exam_total_score) {
                 'gender'            => $classStudent->gender,
                 'email'             => $classStudent->email,
                 'department'        => $classStudent->department,
-                'abbreviation'      => $classStudent->abbreviation, // ✅ Save CSV program code here
+                'abbreviation'      => $classStudent->abbreviation,
             ]
         );
 
-        // UPDATE CURRENT TERM RAW VALUE
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE CURRENT TERM RAW VALUE
+        |--------------------------------------------------------------------------
+        */
         $raw->$columnToUpdate = $finalTransmutedGrade;
 
-        // --- RECALCULATE DEPENDENT COMPUTED GRADES ---
-        $prelimRaw     = $raw->prelim ?? 0;
-        $midtermRaw    = $raw->midterm_raw ?? 0;
-        $semiRaw       = $raw->semi_finals_raw ?? 0;
-        $finalRaw      = $raw->final_raw ?? 0;
+        /*
+        |--------------------------------------------------------------------------
+        | RECALCULATE FINAL GRADES
+        |--------------------------------------------------------------------------
+        */
+        $prelimRaw  = $raw->prelim ?? 0;
+        $midtermRaw = $raw->midterm_raw ?? 0;
+        $semiRaw    = $raw->semi_finals_raw ?? 0;
+        $finalRaw   = $raw->final_raw ?? 0;
 
-        // Midterm = 0.33 prelim + 0.67 midterm_raw
-        $raw->midterm = ($prelimRaw * 0.33) + ($midtermRaw * 0.67);
+        // ✅ SUMMER LOGIC
+        if (strtolower($classDetails->academic_period) === 'summer') {
 
-        // Semi-Finals = 0.33 midterm + 0.67 semi_finals_raw
-        $raw->semi_finals = ($raw->midterm * 0.33) + ($semiRaw * 0.67);
+            // Final = (Prelim × 0.33) + (Final Raw × 0.67)
+            $raw->final = ($prelimRaw * 0.33) + ($finalRaw * 0.67);
 
-        // Final = 0.33 semi-finals + 0.67 final_raw
-        $raw->final = ($raw->semi_finals * 0.33) + ($finalRaw * 0.67);
+        } 
+        // ✅ REGULAR LOGIC
+        else {
+
+            $raw->midterm = ($prelimRaw * 0.33) + ($midtermRaw * 0.67);
+            $raw->semi_finals = ($raw->midterm * 0.33) + ($semiRaw * 0.67);
+            $raw->final = ($raw->semi_finals * 0.33) + ($finalRaw * 0.67);
+        }
 
         $raw->updated_at = now();
         $raw->save();
@@ -911,6 +973,7 @@ if (($fields['exam'] ?? 0) > $percentage->exam_total_score) {
 
     return redirect()->back()->with('success', 'Scores and raw grades saved successfully.');
 }
+
 
 
 

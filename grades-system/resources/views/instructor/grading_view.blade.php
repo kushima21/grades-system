@@ -60,6 +60,7 @@
               method="POST" id="gradingForm-{{ $term }}">
             @csrf
             @method('PUT')
+            
 
             <input type="hidden" name="periodic_term" value="{{ $term }}">
 
