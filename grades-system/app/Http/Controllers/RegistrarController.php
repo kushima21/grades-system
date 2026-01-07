@@ -555,7 +555,6 @@ public function importCSV(Request $request, $class)
 
 
 
-
 public function addstudent(Request $request, Classes $class)
 {
     $request->validate([
@@ -564,10 +563,9 @@ public function addstudent(Request $request, Classes $class)
         "gender" => "required",
         "email" => "required|email",
         "department" => "required",
-        "program" => "required", // ✔ added
+        "program" => "required",
     ]);
 
-    // Create a new instance of Classes_Student and assign the values
     $classStudent = new Classes_Student();
     $classStudent->classID = $class->id;
     $classStudent->studentID = $request->student_id;
@@ -575,41 +573,40 @@ public function addstudent(Request $request, Classes $class)
     $classStudent->gender = $request->gender;
     $classStudent->email = $request->email;
     $classStudent->department = $request->department;
-    $classStudent->program = $request->program;  // ⭐ NEW LINE – saves program
+    $classStudent->program = $request->program;
+
+    // ✅ IMPORTANT PART
+    $classStudent->abbreviation = $class->program; 
+    // example: BSCS, BSBA-FM, etc.
 
     // Array of periodic terms
-   $periodicTerms = ['Prelim', 'Midterm', 'Semi-Finals', 'Finals'];
+    $periodicTerms = ['Prelim', 'Midterm', 'Semi-Finals', 'Finals'];
 
-// ✅ If academic period is Summer, limit to Prelim & Finals only
-if (strtolower($class->academic_period) === 'summer') {
-    $periodicTerms = ['Prelim', 'Finals'];
-}
-
-    // Save the instance of Classes_Student
-// Save the instance of Classes_Student
-if ($classStudent->save()) {
-
-    // Insert a row for each periodic term in quizzes_scores
-    foreach ($periodicTerms as $term) {
-        $quizzesandscores = new QuizzesAndScores();
-        $quizzesandscores->classID = $class->id;
-        $quizzesandscores->studentID = $request->student_id;
-        $quizzesandscores->periodic_term = $term;
-        $quizzesandscores->quizzez = 0;
-        $quizzesandscores->attendance_behavior = 0;
-        $quizzesandscores->assignments = 0;
-        $quizzesandscores->exam = 0;
-        $quizzesandscores->save();
+    if (strtolower($class->academic_period) === 'summer') {
+        $periodicTerms = ['Midterm', 'Finals'];
     }
 
-    return redirect()->route("class.show", $class->id)
-        ->with("success", "Student added successfully.");
-}
+    if ($classStudent->save()) {
+
+        foreach ($periodicTerms as $term) {
+            $quizzesandscores = new QuizzesAndScores();
+            $quizzesandscores->classID = $class->id;
+            $quizzesandscores->studentID = $request->student_id;
+            $quizzesandscores->periodic_term = $term;
+            $quizzesandscores->quizzez = 0;
+            $quizzesandscores->attendance_behavior = 0;
+            $quizzesandscores->assignments = 0;
+            $quizzesandscores->exam = 0;
+            $quizzesandscores->save();
+        }
+
+        return redirect()->route("class.show", $class->id)
+            ->with("success", "Student added successfully.");
+    }
 
     return redirect()->route("class.show", $class->id)
         ->with("error", "Failed to add student. Please try again.");
 }
-
 
     public function removestudent($class, $student)
 {
@@ -956,7 +953,7 @@ public function addQuizAndScore(Request $request, $class)
         if (strtolower($classDetails->academic_period) === 'summer') {
 
             // Final = (Prelim × 0.33) + (Final Raw × 0.67)
-            $raw->final = ($prelimRaw * 0.33) + ($finalRaw * 0.67);
+            $raw->final = ($midtermRaw * 0.33) + ($finalRaw * 0.67);
 
         } 
         // ✅ REGULAR LOGIC
@@ -1037,7 +1034,7 @@ public function showGrading($id, $academic_period)
     $class = Classes::findOrFail($id);
 
     $terms = ($academic_period === 'Summer')
-        ? ['Prelim', 'Finals']
+        ? ['Midterm', 'Finals']
         : ['Prelim', 'Midterm', 'Semi-Finals', 'Finals'];
 
     $percentage = [];
@@ -1161,7 +1158,6 @@ private function getWeightedGrade($transmutedGrade, $percentage)
         ? ($transmutedGrade * $percentage) / 100
         : 0;
 }
-
 public function initializeGrades(Request $request)
 {
     $grades = $request->grades;
@@ -1170,7 +1166,7 @@ public function initializeGrades(Request $request)
         return back()->with('error', 'No students yet, you can\'t initialize.');
     }
 
-    // Get all transmutations sorted ascending by 'grades'
+    // Get all transmutations sorted ascending by grades
     $transmutations = FinalTransmutation::orderBy('grades', 'asc')->get();
 
     foreach ($grades as $grade) {
@@ -1181,36 +1177,79 @@ public function initializeGrades(Request $request)
 
         $finalGrade = floatval($grade['final'] ?? 0);
 
-        // Step 1: Try to match using 'grades'
-        $matched = $transmutations->filter(fn($t) => $finalGrade >= floatval($t->grades))->last();
+        /*
+        |--------------------------------------------------------------------------
+        | DETERMINE REMARKS
+        |--------------------------------------------------------------------------
+        */
+        $matched = $transmutations
+            ->filter(fn ($t) => $finalGrade >= floatval($t->grades))
+            ->last();
 
-        // Step 2: If no match on 'grades', try 'transmutation'
         if (!$matched) {
-            $matched = $transmutations->filter(fn($t) => $finalGrade >= floatval($t->transmutation))->last();
+            $matched = $transmutations
+                ->filter(fn ($t) => $finalGrade >= floatval($t->transmutation))
+                ->last();
         }
 
         $remarks = $matched ? $matched->remarks : 'Failed';
 
-        // ---------------- Save program in raw_grades ----------------
+        /*
+        |--------------------------------------------------------------------------
+        | FETCH RAW GRADES (SOURCE OF midterm_raw)
+        |--------------------------------------------------------------------------
+        */
+        $rawGrade = DB::table('raw_grades')
+            ->where('classID', $grade['classID'])
+            ->where('studentID', $grade['studentID'])
+            ->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE RAW GRADES
+        |--------------------------------------------------------------------------
+        */
         DB::table('raw_grades')
             ->where('classID', $grade['classID'])
             ->where('studentID', $grade['studentID'])
             ->update([
                 'remarks'      => $remarks,
-                'program'      => optional($studentInfo)->program,       // ✅ Save program
-                'abbreviation' => optional($studentInfo)->abbreviation,  // ✅ Save abbreviation
+                'program'      => optional($studentInfo)->program,
+                'abbreviation' => optional($studentInfo)->abbreviation,
             ]);
 
-        // ---------------- Insert or update final_grade ----------------
+        /*
+        |--------------------------------------------------------------------------
+        | CHECK EXISTING FINAL GRADE
+        |--------------------------------------------------------------------------
+        */
         $existing = DB::table('final_grade')
             ->where('classID', $grade['classID'])
             ->where('studentID', $grade['studentID'])
             ->first();
 
+        /*
+        |--------------------------------------------------------------------------
+        | ✅ MIDTERM SOURCE RULE
+        |--------------------------------------------------------------------------
+        | Summer  -> raw_grades.midterm_raw
+        | Regular -> computed midterm
+        */
+        $isSummer = strtolower(optional($classInfo)->academic_period) === 'summer';
+
+        $midtermValue = $isSummer
+            ? ($rawGrade->midterm_raw ?? null)   // ✅ EXACTLY WHAT YOU WANT
+            : ($grade['midterm'] ?? null);
+
+        /*
+        |--------------------------------------------------------------------------
+        | INSERT / UPDATE FINAL GRADE
+        |--------------------------------------------------------------------------
+        */
         DB::table('final_grade')->updateOrInsert(
             [
                 'classID'   => $grade['classID'],
-                'studentID' => $grade['studentID']
+                'studentID' => $grade['studentID'],
             ],
             [
                 'course_no'         => optional($classInfo)->course_no,
@@ -1219,29 +1258,28 @@ public function initializeGrades(Request $request)
                 'academic_period'   => optional($classInfo)->academic_period,
                 'schedule'          => optional($classInfo)->schedule,
 
-                'name'        => optional($studentInfo)->name,
-                'gender'      => optional($studentInfo)->gender,
-                'email'       => optional($studentInfo)->email,
-                'department'  => optional($studentInfo)->department,
-                'program'     => optional($studentInfo)->program,       // ✅ Save program
-                'abbreviation'=> optional($studentInfo)->abbreviation,  // ✅ Save abbreviation
+                'name'         => optional($studentInfo)->name,
+                'gender'       => optional($studentInfo)->gender,
+                'email'        => optional($studentInfo)->email,
+                'department'   => optional($studentInfo)->department,
+                'program'      => optional($studentInfo)->program,
+                'abbreviation' => optional($studentInfo)->abbreviation,
 
-                'prelim'      => $grade['prelim'] ?? null,
-                'midterm'     => $grade['midterm'] ?? null,
-                'semi_finals' => $grade['semi_finals'] ?? null,
-                'final'       => $grade['final'] ?? null,
+                'prelim'       => $grade['prelim'] ?? null,
+                'midterm'      => $midtermValue,      // ✅ raw_grades.midterm_raw if Summer
+                'semi_finals'  => $grade['semi_finals'] ?? null,
+                'final'        => $grade['final'] ?? null,
 
-                'remarks'     => $remarks,
-                'status'      => $existing->status ?? '',
-                'updated_at'  => now(),
-                'created_at'  => $existing ? null : now(),
+                'remarks'      => $remarks,
+                'status'       => $existing->status ?? '',
+                'updated_at'   => now(),
+                'created_at'   => $existing ? null : now(),
             ]
         );
     }
 
     return back()->with('success', 'Grades have been initialized successfully!');
 }
-
 
 
 
@@ -1293,6 +1331,7 @@ public function showClassGrades($classID)
 public function lockInGrades(Request $request)
 {
     $grades = $request->grades;
+
     if (empty($grades)) {
         return back()->with('error', 'No students yet, you can\'t lock.');
     }
@@ -1300,40 +1339,14 @@ public function lockInGrades(Request $request)
     $classID = $request->classID;
     $department = $request->department;
 
-    $classInfo = Classes::find($classID);
-
     foreach ($grades as $g) {
-        $studentID = $g['studentID'];
-        $studentInfo = Classes_Student::where('studentID', $studentID)->first();
-
-        DB::table('final_grade')->updateOrInsert(
-            [
-                'classID' => $classID,
-                'studentID' => $studentID
-            ],
-            [
-                'course_no' => optional($classInfo)->course_no,
-                'descriptive_title' => optional($classInfo)->descriptive_title,
-                'instructor' => optional($classInfo)->instructor,
-                'academic_period' => optional($classInfo)->academic_period,
-                'schedule' => optional($classInfo)->schedule,
-
-                'name' => optional($studentInfo)->name,
-                'gender' => optional($studentInfo)->gender,
-                'email' => optional($studentInfo)->email,
-                'department' => optional($studentInfo)->department,
-
-                'prelim' => $g['prelim'],
-                'midterm' => $g['midterm'],
-                'semi_finals' => $g['semi_finals'],
-                'final' => $g['final'],
-                'remarks' => $g['remarks'],
-
+        DB::table('final_grade')
+            ->where('classID', $classID)
+            ->where('studentID', $g['studentID'])
+            ->update([
                 'status' => 'Locked',
                 'updated_at' => now(),
-                'created_at' => now(),
-            ]
-        );
+            ]);
     }
 
     return back()->with('success', 'Final grades for ' . $department . ' have been locked successfully!');
@@ -1343,7 +1356,8 @@ public function lockInGrades(Request $request)
 
 
 
-    public function UnlockGrades(Request $request)
+
+ public function UnlockGrades(Request $request)
     {
         $department = $request->input('department');
         $classID = $request->input('classID'); // 🔥 Include classID
@@ -1362,115 +1376,163 @@ public function lockInGrades(Request $request)
 
         return back()->with('success', "Final grades have been unlocked!");
     }
+
+
 public function submitToDean(Request $request)
 {
+    // ----------------------------
+    // VALIDATION
+    // ----------------------------
     $request->validate([
-        'classID' => 'required',
-        'department' => 'required',
+        'classID' => 'required|integer',
+        'department' => 'required|string',
     ]);
 
     $classID = $request->classID;
     $department = $request->department;
 
-    // Update final_grade table submission status
+    // ----------------------------
+    // UPDATE FINAL_GRADE TABLE
+    // ----------------------------
     DB::table('final_grade')
         ->where('classID', $classID)
         ->where('department', $department)
         ->update([
             'submit_status' => 'Submitted',
-            'updated_at' => now(),
+            'dean_status'   => null,   // ✅ RESET dean_status when re-submitted
+            'updated_at'    => now(),
         ]);
 
-    // Optional Class Status Message
+    // ----------------------------
+    // UPDATE CLASS STATUS
+    // ----------------------------
     Classes::where('id', $classID)->update([
         'status' => "Pending Dean Approval ($department)",
         'updated_at' => now(),
     ]);
 
-    // Notify Dean
+    // ----------------------------
+    // NOTIFY DEAN
+    // ----------------------------
     $class = Classes::find($classID);
     $submitter = Auth::user();
-    $dean = User::where('role', 'dean')->first(); // adjust to your database
+    $dean = User::where('role', 'dean')->first(); // adjust if needed
 
     if (!$dean) {
         return redirect()->back()->with('error', 'No dean found to notify!');
     }
 
     DB::table('notif_table')->insert([
-        'notif_type' => "Submitted to Dean",
-        'class_id' => $classID,
-        'department' => $department,
-        'course_no' => $class->course_no,
+        'notif_type'              => "Submitted to Dean",
+        'class_id'                => $classID,
+        'department'              => $department,
+        'course_no'               => $class->course_no,
         'class_descriptive_title' => $class->descriptive_title,
-        'added_by_id' => $submitter->studentID,
-        'added_by_name' => $submitter->name,
-        'target_by_id' => $dean->studentID,
-        'target_by_name' => $dean->name,
-        'status_from_added' => 'unchecked',
-        'status_from_target' => 'unchecked',
-        'created_at' => now(),
-        'updated_at' => now(),
+        'added_by_id'             => $submitter->studentID,
+        'added_by_name'           => $submitter->name,
+        'target_by_id'            => $dean->studentID,
+        'target_by_name'          => $dean->name,
+        'status_from_added'       => 'unchecked',
+        'status_from_target'      => 'unchecked',
+        'created_at'              => now(),
+        'updated_at'              => now(),
     ]);
 
-    // Refresh the same page and scroll to the department section
-    return redirect()->back()->with('success', "Grades were submitted to Dean successfully!#{$department}");
+    // ----------------------------
+    // RESPONSE
+    // ----------------------------
+    return redirect()->back()->with(
+        'success',
+        "Grades were submitted to Dean successfully!#{$department}"
+    );
 }
 
 
 
 public function deanDecision(Request $request)
 {
+    // ----------------------------
+    // VALIDATION
+    // ----------------------------
     $request->validate([
-        'dean_status' => 'required',
-        'department' => 'required',
-        'classID' => 'required',
+        'dean_status' => 'required|string|in:Confirmed,Returned',
+        'department'  => 'required|string',
+        'classID'     => 'required|integer',
     ]);
 
     $department = $request->department;
-    $classID = $request->classID;
-    $deanStatus = $request->dean_status;
-    $remarks = $request->dean_remarks ?? '';
+    $classID    = $request->classID;
+    $inputDeanStatus = $request->dean_status; // from form
+    $remarks    = $request->dean_remarks ?? '';
 
-    // Update final_grade table
+    // ----------------------------
+    // UPDATE FINAL_GRADE TABLE
+    // ----------------------------
+    $updateData = [
+        'updated_at' => now(),
+    ];
+
+    if ($inputDeanStatus === 'Returned') {
+        // ✅ WHEN RETURNED
+        $updateData['dean_status']   = 'Returned';
+        $updateData['submit_status'] = 'Pending';
+        $updateData['dean_comment']  = $remarks;
+    } else {
+        // ✅ WHEN CONFIRMED
+        $updateData['dean_status']   = 'Confirmed';
+        $updateData['dean_comment']  = '';
+    }
+
     DB::table('final_grade')
         ->where('classID', $classID)
         ->where('department', $department)
-        ->update([
-            'dean_status' => $deanStatus,
-            'dean_comment' => ($deanStatus === 'Returned') ? $remarks : '',
-            'updated_at' => now(),
-        ]);
+        ->update($updateData);
 
-    // Update class status message
-    $class = Classes::find($classID);
-    $statusMessage = ($deanStatus === 'Confirmed')
+    // ----------------------------
+    // UPDATE CLASS STATUS MESSAGE
+    // ----------------------------
+    $class = Classes::findOrFail($classID);
+
+    $statusMessage = ($inputDeanStatus === 'Confirmed')
         ? 'Dean approved the grades. Ready to submit to Registrar'
         : 'Dean returned the grades. Waiting for instructor action';
 
-    Classes::where('id', $classID)->update(['status' => $statusMessage]);
+    Classes::where('id', $classID)->update([
+        'status' => $statusMessage
+    ]);
 
-    // Notify Instructor
+    // ----------------------------
+    // NOTIFY INSTRUCTOR
+    // ----------------------------
     $instructor = User::where('name', $class->instructor)->first();
     $dean = Auth::user();
 
     DB::table('notif_table')->insert([
-        'notif_type' => "Dean's decision: $deanStatus",
-        'class_id' => $classID,
-        'course_no' => $class->course_no,
-        'class_descriptive_title' => $class->descriptive_title,
-        'department' => $department,
-        'added_by_id' => $dean->studentID,
-        'added_by_name' => $dean->name,
-        'target_by_id' => $instructor->studentID ?? null,
-        'target_by_name' => $instructor->name ?? null,
-        'status_from_added' => 'unchecked',
-        'status_from_target' => 'unchecked',
-        'created_at' => now(),
-        'updated_at' => now(),
+        'notif_type'               => "Dean's decision: $inputDeanStatus",
+        'class_id'                 => $classID,
+        'course_no'                => $class->course_no,
+        'class_descriptive_title'  => $class->descriptive_title,
+        'department'               => $department,
+        'added_by_id'              => $dean->studentID,
+        'added_by_name'            => $dean->name,
+        'target_by_id'             => $instructor->studentID ?? null,
+        'target_by_name'           => $instructor->name ?? null,
+        'status_from_added'        => 'unchecked',
+        'status_from_target'       => 'unchecked',
+        'created_at'               => now(),
+        'updated_at'               => now(),
     ]);
 
-    return back()->with('success', "Decision ($deanStatus) has been submitted successfully!");
+    // ----------------------------
+    // RESPONSE
+    // ----------------------------
+    return back()->with(
+        'success',
+        "Decision ($inputDeanStatus) has been submitted successfully!"
+    );
 }
+
+
 
 
 public function submitToRegistrar(Request $request)

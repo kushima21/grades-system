@@ -41,7 +41,7 @@
                         <div class="loginBtn">
                             <button type="submit" class="signin">Sign in Now</button>
                             <p class="or">--------or continue with--------</p>
-                            <a href="#">
+                            <a href="{{ route('login.google') }}">
                                 <button type="button" class="signup">
                                     <img src="{{ asset('system_images/google.svg') }}" class="google-logo">
                                     Sign with Google

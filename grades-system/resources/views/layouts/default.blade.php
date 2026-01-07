@@ -111,7 +111,13 @@
                             </div>
 
                              <div class="manage-links">
-                                <a href="#">
+                                <a href="{{ url('/academic_grades_archive') }}">
+                                    <span>Academic Grades Archived</span>
+                                </a>
+                            </div>
+
+                             <div class="manage-links">
+                                <a href="{{ url('/student_grades_archive') }}   ">
                                     <span>Student Grades Archived</span>
                                 </a>
                             </div>
@@ -137,6 +143,14 @@
                             <div class="manage-links">
                                 <a href="{{ url('/users') }}">
                                     <span>Users</span>
+                                </a>
+                            </div>
+                             @endif
+
+                            @if (Auth::check() && str_contains(Auth::user()->role, 'admin'))
+                            <div class="manage-links">
+                                <a href="{{ url('/students') }}">
+                                    <span>Students Account</span>
                                 </a>
                             </div>
                              @endif

@@ -88,108 +88,112 @@
         {{-- TABLE WRAPPER --}}
         <div class="student-grades-wrapper">
 
-    {{-- ===================== GRADES TABLE ===================== --}}
-    <table class="student-grades-table-container">
+            {{-- ===================== GRADES TABLE ===================== --}}
+            <table class="student-grades-table-container">
 
-        {{-- ---------- TABLE HEADER ---------- --}}
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Department</th>
-            <th>Prelim</th>
+                {{-- ---------- TABLE HEADER ---------- --}}
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Department</th>
+                    @if($class->academic_period !== 'Summer')
+                    <th>Prelim</th>
+                    @endif
+                        @if($class->academic_period !== 'Summer')
+                        <th class="raw-col">Mid-Term Raw</th>
+                    @endif
+                        <th>Mid-Term</th>
+                    @if($class->academic_period !== 'Summer')
+                        <th class="raw-col">Semi-Final Raw</th>
+                        <th>Semi Finals</th>
+                    @endif
 
-            @if($class->academic_period !== 'Summer')
-                <th class="raw-col">Mid-Term Raw</th>
-                <th>Mid-Term</th>
-                <th class="raw-col">Semi-Final Raw</th>
-                <th>Semi Finals</th>
-            @endif
+                    <th class="raw-col">Final Raw</th>
+                    <th>Finals</th>
+                    <th>Remarks</th>
+                </tr>
+                </thead>
 
-            <th class="raw-col">Final Raw</th>
-            <th>Finals</th>
-            <th>Remarks</th>
-        </tr>
-        </thead>
+                {{-- ---------- TABLE BODY ---------- --}}
+                <tbody>
+                @foreach($students as $g)
+                    <tr>
+                        <td>{{ $g->name }}</td>
+                        <td>{{ $g->department }}</td>
+                        <td>{{ $g->midterm_raw ?? '-' }}</td>
 
-        {{-- ---------- TABLE BODY ---------- --}}
-        <tbody>
-        @foreach($students as $g)
-            <tr>
-                <td>{{ $g->name }}</td>
-                <td>{{ $g->department }}</td>
-                <td>{{ $g->prelim ?? '-' }}</td>
+                        @if($class->academic_period !== 'Summer')
+                            <td class="raw-col">{{ $g->midterm_raw ?? '-' }}</td>
+                            <td>{{ $g->midterm ?? '-' }}</td>
+                            <td class="raw-col">{{ $g->semi_finals_raw ?? '-' }}</td>
+                            <td>{{ $g->semi_finals ?? '-' }}</td>
+                        @endif
 
-                @if($class->academic_period !== 'Summer')
-                    <td class="raw-col">{{ $g->midterm_raw ?? '-' }}</td>
-                    <td>{{ $g->midterm ?? '-' }}</td>
-                    <td class="raw-col">{{ $g->semi_finals_raw ?? '-' }}</td>
-                    <td>{{ $g->semi_finals ?? '-' }}</td>
-                @endif
-
-                <td class="raw-col">{{ $g->final_raw ?? '-' }}</td>
-                <td>{{ $g->final ?? '-' }}</td>
-                <td>{{ $g->remarks ?? '-' }}</td>
-            </tr>
-        @endforeach
-        </tbody>
-
-    </table>
-
-    {{-- ===================== BUTTON LOGIC PER DEPARTMENT ===================== --}}
-    @php
-        $locked = isset($departmentStatus[$department]) 
-                  && $departmentStatus[$department]->status === 'Locked';
-
-        $submitted = isset($departmentStatus[$department]) 
-                     && $departmentStatus[$department]->submit_status === 'Submitted';
-    @endphp
-
-    {{-- SHOW only when NOT locked & NOT submitted --}}
-    @if(!($locked && $submitted))
-        <div class="gradeBTn">
-
-            {{-- ---------- LOCK BUTTON ---------- --}}
-            <form method="POST" action="{{ route('lock.grades') }}">
-                @csrf
-
-                <input type="hidden" name="classID" value="{{ $class->id }}">
-                <input type="hidden" name="department" value="{{ $department }}">
-
-                @foreach($students as $index => $g)
-                    <input type="hidden" name="grades[{{ $index }}][studentID]" value="{{ $g->studentID }}">
-                    <input type="hidden" name="grades[{{ $index }}][prelim]" value="{{ $g->prelim }}">
-                    <input type="hidden" name="grades[{{ $index }}][midterm]" value="{{ $g->midterm }}">
-                    <input type="hidden" name="grades[{{ $index }}][semi_finals]" value="{{ $g->semi_finals }}">
-                    <input type="hidden" name="grades[{{ $index }}][final]" value="{{ $g->final }}">
-                    <input type="hidden" name="grades[{{ $index }}][remarks]" value="{{ $g->remarks }}">
+                        <td class="raw-col">{{ $g->final_raw ?? '-' }}</td>
+                        <td>{{ $g->final ?? '-' }}</td>
+                        <td>{{ $g->remarks ?? '-' }}</td>
+                    </tr>
                 @endforeach
+                </tbody>
 
-                <button type="submit" class="lockBtn">
-                    {{ $locked ? 'Unlock in '.$department : 'Lock in '.$department }}
-                </button>
-            </form>
+            </table>
 
-            {{-- ---------- SUBMIT TO DEAN (only if locked) ---------- --}}
-            @if($locked)
-                <form method="POST" action="{{ route('submit.to.dean') }}">
-                    @csrf
+            {{-- ===================== BUTTON LOGIC PER DEPARTMENT ===================== --}}
+            @php
+                $locked = isset($departmentStatus[$department]) 
+                        && $departmentStatus[$department]->status === 'Locked';
 
-                    <input type="hidden" name="classID" value="{{ $class->id }}">
-                    <input type="hidden" name="department" value="{{ $department }}">
+                $submitted = isset($departmentStatus[$department]) 
+                            && $departmentStatus[$department]->submit_status === 'Submitted';
+            @endphp
 
-                    @foreach($students as $index => $g)
-                        <input type="hidden" name="grades[{{ $index }}][studentID]" value="{{ $g->studentID }}">
-                    @endforeach
+            {{-- SHOW only when NOT locked & NOT submitted --}}
+            @if(!($locked && $submitted))
+                <div class="gradeBTn">
 
-                    <button type="submit" class="subToDeanBTn">
-                        Submit to Dean in {{ $department }}
-                    </button>
-                </form>
+                    {{-- ---------- LOCK BUTTON ---------- --}}
+                    <form method="POST" 
+                        action="{{ $locked ? route('unlock.grades') : route('lock.grades') }}">
+                        @csrf
+
+                        <input type="hidden" name="classID" value="{{ $class->id }}">
+                        <input type="hidden" name="department" value="{{ $department }}">
+
+                        @foreach($students as $index => $g)
+                            <input type="hidden" name="grades[{{ $index }}][studentID]" value="{{ $g->studentID }}">
+                            <input type="hidden" name="grades[{{ $index }}][prelim]" value="{{ $g->prelim }}">
+                            <input type="hidden" name="grades[{{ $index }}][midterm]" value="{{ $g->midterm }}">
+                            <input type="hidden" name="grades[{{ $index }}][semi_finals]" value="{{ $g->semi_finals }}">
+                            <input type="hidden" name="grades[{{ $index }}][final]" value="{{ $g->final }}">
+                            <input type="hidden" name="grades[{{ $index }}][remarks]" value="{{ $g->remarks }}">
+                        @endforeach
+
+                        <button type="submit" class="lockBtn">
+                            {{ $locked ? 'Unlock in '.$department : 'Lock in '.$department }}
+                        </button>
+                    </form>
+
+                    {{-- ---------- SUBMIT TO DEAN (only if locked) ---------- --}}
+                    @if($locked)
+                        <form method="POST" action="{{ route('submit.to.dean') }}">
+                            @csrf
+
+                            <input type="hidden" name="classID" value="{{ $class->id }}">
+                            <input type="hidden" name="department" value="{{ $department }}">
+
+                            @foreach($students as $index => $g)
+                                <input type="hidden" name="grades[{{ $index }}][studentID]" value="{{ $g->studentID }}">
+                            @endforeach
+
+                            <button type="submit" class="subToDeanBTn">
+                                Submit to Dean in {{ $department }}
+                            </button>
+                        </form>
+                    @endif
+                </div>
             @endif
-        </div>
-    @endif
 
-</div>
+        </div>
 
     </div>
     @endforeach

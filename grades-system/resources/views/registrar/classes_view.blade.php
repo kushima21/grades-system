@@ -291,28 +291,50 @@
                             Grades are not yet locked and submitted for this department.
                         </p>
                     @endif
-                @if($showDeanButtons)
-                <p class="decision-header">Dean's Decision for: {{ $dept }}</p>
-                <div class="decisionBtn-container">
-                    <form method="POST" action="{{ route('dean.decision') }}">
-                        @csrf
-                        <label style="margin-right: 15px;">
-                            <input type="checkbox" name="dean_status" value="Confirmed">
-                            <span class="decision-span">Confirmed</span>
-                        </label>
-                        <label>
-                            <input type="checkbox" name="dean_status" value="Returned">
-                            <span class="decision-span">Returned</span>
-                        </label>
-                        <br>
-                        <textarea name="dean_remarks" rows="2" cols="30" placeholder="Add a comment (optional, only if returned)..." style="display:none;"></textarea>
-                        <br>
-                        <input type="hidden" name="department" value="{{ $dept }}">
-                        <input type="hidden" name="classID" value="{{ $classes->id }}">
-                        <button type="submit" class="deanDecisionBtn">Submit Decision for {{ $dept }}</button>
-                    </form>
-                </div>
-            @endif
+           @if(
+            $showDeanButtons &&
+            (
+                is_null($firstGrade->dean_status) ||
+                $firstGrade->dean_status === 'Returned'
+            )
+        )
+    <p class="decision-header">Dean's Decision for: {{ $dept }}</p>
+
+    <div class="decisionBtn-container">
+        <form method="POST" action="{{ route('dean.decision') }}">
+            @csrf
+
+            <label style="margin-right: 15px;">
+                <input type="checkbox" name="dean_status" value="Confirmed">
+                <span class="decision-span">Confirmed</span>
+            </label>
+
+            <label>
+                <input type="checkbox" name="dean_status" value="Returned">
+                <span class="decision-span">Returned</span>
+            </label>
+
+            <br>
+
+            <textarea name="dean_remarks"
+                rows="2"
+                cols="30"
+                placeholder="Add a comment (only if returned)..."
+                style="display:none;">
+            </textarea>
+
+            <br>
+
+            <input type="hidden" name="department" value="{{ $dept }}">
+            <input type="hidden" name="classID" value="{{ $classes->id }}">
+
+            <button type="submit" class="deanDecisionBtn">
+                Submit Decision for {{ $dept }}x
+            </button>
+        </form>
+    </div>
+@endif
+
 
             {{-- Submit to Registrar --}}
             @if($showRegistrarSubmit)
@@ -345,7 +367,7 @@
                         @endif
 
                         <label style="margin-right: 15px;">
-                            <input type="radio" name="registrar_status" value="Approved" required>
+                            <input type="radio" name="registrar_status" style="margin-left: 20px" value="Approved" required>
                             Approved
                         </label>
                         <label>
@@ -356,7 +378,7 @@
                         <textarea name="registrar_comment" id="registrar_comment" rows="2" cols="30" placeholder="Provide reason (required if Rejected)" style="display:none;"></textarea>
                         <br>
 
-                        <button type="submit" class="registrarDecisionBtn">Submit Decision</button>
+                        <button type="submit" class="registrarDecisionBtn" style="margin-top: 10px;">Submit Decision</button>
                     </form>
                 </div>
             @endif

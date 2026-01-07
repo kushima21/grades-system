@@ -182,6 +182,8 @@ $bscsAbbreviations = [
     'BSCS',
     'BSCS - A',
     'BSCS - B',
+    'BSCS - SET A',
+    'BSCS - SET B',
     'BSCS-A',
     'BSCS-B'
 ];

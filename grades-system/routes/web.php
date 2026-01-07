@@ -44,8 +44,13 @@ Route::view('/my_class_archive', 'registrar.my_class_archive');
 Route::view('/classes_view', 'registrar.classes_view');
 
 Route::view('/users', 'admin.users');
+Route::view('/students', 'admin.students');
 Route::view('/departments', 'admin.departments');
 Route::view('/login', 'auth.login');
+
+Route::view('/academic_grades_archive', 'registrar.academic_grades_archive');
+
+Route::view('/student_grades_archive', 'registrar.student_grades_archive');
 
 
 /*
@@ -256,3 +261,7 @@ Route::post('/registrar-submit-grades', [RegistrarController::class, 'submitToRe
 
 Route::post('/class/{class}/students/bulk-remove', [RegistrarController::class, 'bulkRemoveStudents'])
     ->name('class.bulkRemove');
+
+
+    Route::post('/unlock-grades', [RegistrarController::class, 'UnlockGrades'])
+    ->name('unlock.grades');

@@ -37,7 +37,7 @@
         <div class="c-table-list-container">
             @php
                 $terms = ($academic_period === 'Summer')
-                    ? ['Prelim', 'Finals']
+                    ? ['Midterm', 'Finals']
                     : ['Prelim', 'Midterm', 'Semi-Finals', 'Finals'];
             @endphp
 
