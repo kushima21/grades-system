@@ -17,7 +17,8 @@ use App\Http\Controllers\{
     StudentsGradeController,
     NotificationController,
     CompleteCredentialController,
-    PDFController
+    PDFController,
+    StudentController
 };
 
 
@@ -265,3 +266,8 @@ Route::post('/class/{class}/students/bulk-remove', [RegistrarController::class, 
 
     Route::post('/unlock-grades', [RegistrarController::class, 'UnlockGrades'])
     ->name('unlock.grades');
+
+    // store students information
+
+    Route::post('/students/store', [StudentController::class, 'store'])
+     ->name('students.store');

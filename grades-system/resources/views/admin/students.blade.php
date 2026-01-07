@@ -21,7 +21,16 @@
                 Student Information
             </h3>
             <div class="student-account-form-container">
-                <form method="" action="">
+                @if ($errors->any())
+    <div style="color:red; margin-bottom:10px;">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+                <form method="POST" action="{{ route('students.store') }}">
                     @csrf
                     <div class="student-form-box-container">
                             <div class="form-info">
@@ -38,7 +47,7 @@
                             </div>
                             <div class="form-info">
                                 <label>Department:</label>
-                                <select name="department">
+                                <select name="department" id="department">
                                     <option value="">Select Department</option>
                                     <option value="Bachelor of Science in Computer Science">Bachelor of Science in Computer Science</option>
                                     <option value="Bachelor of Business in Administration">Bachelor of Business in Administration</option>
@@ -55,7 +64,7 @@
                             </div>
                             <div class="form-info">
                                 <label>Abbreviation:</label>
-                                <input type="text" name="lname" id="lname" readonly>
+                                <input type="text" name="abbreviation" id="abbreviation" readonly>
                             </div>
                             <div class="form-info">
                                 <label>Gender:</label>
@@ -67,7 +76,13 @@
                             </div>
                             <div class="form-info">
                                 <label>Year Level:</label>
-                                <input type="text" name="yearLevel" id="yearLevel" placeholder="Enter Year Level...">
+                                <select name="year_level">
+                                    <option value="">Select Year Level</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                </select>
                             </div>
                             <div class="form-info">
                                 <label>Nationality:</label>
@@ -75,12 +90,16 @@
                             </div>
                             <div class="form-info">
                                 <label>Batch Year:</label>
-                                <input type="text" name="batchYear" id="batchYear" placeholder="Enter Batch Year...">
+                                <input type="text" name="batch_year" id="batch_year" placeholder="Enter Batch Year...">
                             </div>
+                               <div class="form-info">
+                                <label>Email:</label>
+                                <input type="text" name="email" id="email" placeholder="Enter Student Email...">
+                            </div>
+                             <div class="studentBtn">
+                        <button type="submit" name="submit">Submit</button>
+                        <button type="button">Cancel</button>
                     </div>
-                    <div class="studentBtn">
-                        <button>Submit</button>
-                        <button>Cancel</button>
                     </div>
                 </form>
             </div>
@@ -126,4 +145,26 @@
             </table>
         </div>
     </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const departmentSelect = document.getElementById('department');
+    const abbreviationInput = document.getElementById('abbreviation');
+
+    const abbreviations = {
+        "Bachelor of Science in Computer Science": "BSCS",
+        "Bachelor of Business in Administration": "BSBA",
+        "Bachelor of Elementary Education": "BEED",
+        "Bachelor of Secondary Education": "BSED",
+        "Bachelor of Science in Social Studies": "BSSW",
+        "Bachelor of Arts in English Studies": "BAELS",
+        "Bachelor of Science in Criminology": "BSCRIM"
+    };
+
+    departmentSelect.addEventListener('change', function () {
+        const selectedDept = this.value;
+        abbreviationInput.value = abbreviations[selectedDept] || '';
+    });
+});
+</script>
+
 @endsection

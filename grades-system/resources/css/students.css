@@ -64,7 +64,7 @@
     flex-wrap: wrap;
     justify-content: space-between;
     padding: 0 20px 10px;
-    gap: 20px; /* space between columns */
+    gap: 10px; /* space between columns */
     }
 
     
@@ -95,6 +95,9 @@
 
 .studentBtn {
     margin: 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
 }
 
 .studentBtn button {
