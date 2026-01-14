@@ -3,24 +3,10 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
 @section('content')
     <div class="classes-main-container">
-        <div class="span">
-            <span>Admin</span>
-            <span>></span>
-            <span>Manage</span>
-            <span>></span>
-            <span>Classes</span>
-        </div>
-        <h2 class="my-header">
-            Classes
-        </h2>
-        <div class="search-bar">
-            <form method="" action="">
-                <input type="text" name="searchClass" id="searchClass" placeholder="Quick Search...">
-            </form>
-        </div>
-          <a href="{{ route('download.csv') }}" class="btn"><i class="fa fa-download"></i> Download CSV</a>
         <div class="classes-modal-container" id="classesModal">
             <h2 class="classes-modal-header">
                 Create New Class
@@ -140,13 +126,29 @@
                 </form>
             </div>
         </div>
+        <div class="span">
+            <span>Admin</span>
+            <span>></span>
+            <span>Manage</span>
+            <span>></span>
+            <span>Classes</span>
+        </div>
+        <h2 class="my-header">
+            Classes
+        </h2>
+        <div class="search-bar">
+            <form method="" action="">
+                <input type="text" name="searchClass" id="searchClass" placeholder="Quick Search...">
+            </form>
+        </div>
+          <a href="{{ route('download.csv') }}" class="btn"><i class="fa fa-download"></i> Download CSV</a>
        <div class="classes-main-container-box">
-    @php
-        $role = strtolower(auth()->user()->role);
-        $isDean = str_contains($role, 'dean');
-        $loggedInUserId = auth()->user()->id; // Get logged-in user ID
-        $loggedInUserName = auth()->user()->name; // or column used in added_by
-    @endphp
+        @php
+            $role = strtolower(auth()->user()->role);
+            $isDean = str_contains($role, 'dean');
+            $loggedInUserId = auth()->user()->id; // Get logged-in user ID
+            $loggedInUserName = auth()->user()->name; // or column used in added_by
+        @endphp
 
     @if($isDean)
     <div class="iconBtbn">
@@ -465,6 +467,7 @@ document.addEventListener('DOMContentLoaded', function () {
     deleteIcons.forEach(icon => {
         icon.addEventListener('click', function () {
             const classId = this.getAttribute('data-id');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             Swal.fire({
                 title: 'Are you sure?',
@@ -476,24 +479,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Create a form dynamically to send POST
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = `/classes/delete/${classId}`;
-                    
-                    // Add CSRF token
-                    const csrfInput = document.createElement('input');
-                    csrfInput.type = 'hidden';
-                    csrfInput.name = '_token';
-                    csrfInput.value = '{{ csrf_token() }}';
-                    form.appendChild(csrfInput);
-
-                    document.body.appendChild(form);
-                    form.submit();
+                    fetch(`/classes/delete/${classId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Deleted!', 'Class has been deleted.', 'success')
+                                .then(() => location.reload());
+                        } else {
+                            Swal.fire('Error!', data.error || 'Failed to delete class.', 'error');
+                        }
+                    })
+                    .catch(err => {
+                        Swal.fire('Error!', err.message || 'Failed to delete class.', 'error');
+                    });
                 }
             });
         });
     });
 });
 </script>
+
 @endsection

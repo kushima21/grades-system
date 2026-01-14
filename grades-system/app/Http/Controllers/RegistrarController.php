@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
 use App\Models\FinalGrade;
+use App\Models\FinalRemarks;
 use App\Models\Percentage;
 use App\Models\QuizzesAndScores;
 use App\Models\Classes_Student;
@@ -310,46 +311,54 @@ public function EditClass(Request $request, Classes $class)
 public function DeleteClass(Classes $class)
 {
     try {
+        if (!$class->exists) {
+            abort(404, 'Class not found');
+        }
 
         $user = Auth::user();
 
         $instructor_name = $class->instructor;
         $instructor = User::where('name', $instructor_name)->first();
 
-        // ▸ UPDATED: department → program
+        // Insert notification
         DB::table('notif_table')->insert([
-            'notif_type'              => 'Class Deleted',
-            'class_id'                => $class->id,
-            'course_no'               => $class->course_no,
+            'notif_type' => 'Class Deleted',
+            'class_id' => $class->id,
+            'course_no' => $class->course_no,
             'class_descriptive_title' => $class->descriptive_title,
-            'program'                 => $user->program ?? null,  // UPDATED
-            'added_by_id'             => $user->studentID,
-            'added_by_name'           => $user->name,
-            'target_by_id'            => $instructor->studentID ?? null,
-            'target_by_name'          => $instructor->name ?? null,
-            'status_from_added'       => 'unchecked',
-            'status_from_target'      => 'unchecked',
-            'created_at'              => now(),
-            'updated_at'              => now(),
+            'program' => $user->program ?? null,
+            'added_by_id' => $user->studentID,
+            'added_by_name' => $user->name,
+            'target_by_id' => $instructor->studentID ?? null,
+            'target_by_name' => $instructor->name ?? null,
+            'status_from_added' => 'unchecked',
+            'status_from_target' => 'unchecked',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
-        // Delete related records
+        // Delete related records first
         DB::table('classes_student')->where('classID', $class->id)->delete();
         DB::table('final_grade')->where('classID', $class->id)->delete();
         DB::table('percentage')->where('classID', $class->id)->delete();
         DB::table('quizzes_scores')->where('classID', $class->id)->delete();
 
-        // Delete the class itself
+        // Delete the class
         $class->delete();
 
-        return redirect()->route('registrar_classes')
-            ->with('success', 'Class and its related records deleted successfully.');
+        return response()->json(['success' => true]);
 
     } catch (\Exception $e) {
-        return redirect()->route('registrar_classes')
-            ->with('error', 'Failed to delete class. Please try again.');
+        \Log::error('DeleteClass failed', ['message' => $e->getMessage()]);
+        return response()->json([
+            'success' => false, 
+            'error' => $e->getMessage()
+        ], 500);
     }
 }
+
+
+
 
 public function show(Request $request, $class)
 {
@@ -1166,10 +1175,16 @@ public function initializeGrades(Request $request)
         return back()->with('error', 'No students yet, you can\'t initialize.');
     }
 
-    // Get all transmutations sorted ascending by grades
+    /*
+    |--------------------------------------------------------------------------
+    | LOAD TRANSMUTATION & FINAL REMARKS
+    |--------------------------------------------------------------------------
+    */
     $transmutations = FinalTransmutation::orderBy('grades', 'asc')->get();
+    $finalRemarks   = DB::table('final_remarks')->orderBy('grades', 'asc')->get();
 
     foreach ($grades as $grade) {
+
         if (!is_array($grade)) continue;
 
         $classInfo   = Classes::find($grade['classID']);
@@ -1179,24 +1194,35 @@ public function initializeGrades(Request $request)
 
         /*
         |--------------------------------------------------------------------------
-        | DETERMINE REMARKS
+        | DETERMINE TRANSMUTED REMARKS (Passed / Failed)
         |--------------------------------------------------------------------------
         */
-        $matched = $transmutations
+        $matchedTransmutation = $transmutations
             ->filter(fn ($t) => $finalGrade >= floatval($t->grades))
             ->last();
 
-        if (!$matched) {
-            $matched = $transmutations
+        if (!$matchedTransmutation) {
+            $matchedTransmutation = $transmutations
                 ->filter(fn ($t) => $finalGrade >= floatval($t->transmutation))
                 ->last();
         }
 
-        $remarks = $matched ? $matched->remarks : 'Failed';
+        $remarks = $matchedTransmutation ? $matchedTransmutation->remarks : 'FAILED';
 
         /*
         |--------------------------------------------------------------------------
-        | FETCH RAW GRADES (SOURCE OF midterm_raw)
+        | DETERMINE FINAL REMARK (FROM final_remarks TABLE)
+        |--------------------------------------------------------------------------
+        */
+        $matchedFinalRemark = $finalRemarks
+            ->filter(fn ($r) => $finalGrade <= floatval($r->grades))
+            ->first();
+
+        $finalRemark = $matchedFinalRemark ? $matchedFinalRemark->remarks : 'FAILED';
+
+        /*
+        |--------------------------------------------------------------------------
+        | FETCH RAW GRADES
         |--------------------------------------------------------------------------
         */
         $rawGrade = DB::table('raw_grades')
@@ -1230,7 +1256,7 @@ public function initializeGrades(Request $request)
 
         /*
         |--------------------------------------------------------------------------
-        | ✅ MIDTERM SOURCE RULE
+        | MIDTERM SOURCE RULE
         |--------------------------------------------------------------------------
         | Summer  -> raw_grades.midterm_raw
         | Regular -> computed midterm
@@ -1238,7 +1264,7 @@ public function initializeGrades(Request $request)
         $isSummer = strtolower(optional($classInfo)->academic_period) === 'summer';
 
         $midtermValue = $isSummer
-            ? ($rawGrade->midterm_raw ?? null)   // ✅ EXACTLY WHAT YOU WANT
+            ? ($rawGrade->midterm_raw ?? null)
             : ($grade['midterm'] ?? null);
 
         /*
@@ -1266,11 +1292,12 @@ public function initializeGrades(Request $request)
                 'abbreviation' => optional($studentInfo)->abbreviation,
 
                 'prelim'       => $grade['prelim'] ?? null,
-                'midterm'      => $midtermValue,      // ✅ raw_grades.midterm_raw if Summer
+                'midterm'      => $midtermValue,
                 'semi_finals'  => $grade['semi_finals'] ?? null,
-                'final'        => $grade['final'] ?? null,
+                'final'        => $finalGrade,
 
-                'remarks'      => $remarks,
+                'remarks'      => $remarks,        // from FinalTransmutation
+                'final_remark' => $finalRemark,    // ✅ from final_remarks table
                 'status'       => $existing->status ?? '',
                 'updated_at'   => now(),
                 'created_at'   => $existing ? null : now(),
@@ -1729,68 +1756,72 @@ public function submitToRegistrar(Request $request)
 
         return back()->with('success', 'Dean’s decision has been submitted successfully!');
     }
-public function submitDecisionRegistrar(Request $request)
+
+
+public function submitDecisionRegistrar(Request $request) 
 {
-    // ✅ VALIDATION
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
     $request->validate([
-        'registrar_status' => 'required|string|in:Approved,Rejected',
-        'classID' => 'required|integer',
-        'department' => 'required|string',
+        'registrar_status'  => 'required|string|in:Approved,Rejected',
+        'classID'           => 'required|integer',
+        'department'        => 'required|string',
         'registrar_comment' => 'nullable|string'
     ]);
 
     $user  = Auth::user();
     $class = Classes::findOrFail($request->classID);
 
-    // Base update data
     $updateData = [
-        'registrar_status' => $request->registrar_status,
+        'registrar_status'  => $request->registrar_status,
         'registrar_comment' => $request->registrar_status === 'Rejected'
             ? $request->registrar_comment
             : null,
-        'updated_at' => now()
+        'updated_at'        => now()
     ];
 
     /*
-    |--------------------------------------------------------------------------|
+    |--------------------------------------------------------------------------
     | ❌ REJECTED BY REGISTRAR
-    |--------------------------------------------------------------------------|
+    |--------------------------------------------------------------------------
     */
     if ($request->registrar_status === 'Rejected') {
-        $updateData['registrar_status'] = 'Rejected';
+
         $updateData['dean_status'] = 'Returned';
 
-        // 🔎 Find Dean & Instructor
         if (stripos($request->department, 'education') !== false) {
             $users = User::whereRaw('LOWER(department) LIKE ?', ['%education%'])->get();
         } else {
             $users = User::where('department', $request->department)->get();
         }
 
-        $dean = $users->first(fn($u) => in_array('dean', array_map('trim', explode(',', $u->role))));
+        $dean       = $users->first(fn ($u) => in_array('dean', array_map('trim', explode(',', $u->role))));
         $instructor = User::where('name', $class->instructor)->first();
 
         $baseNotif = [
-            'notif_type' => 'Class grades have been rejected by the registrar. Please review them.',
-            'class_id' => $class->id,
-            'course_no' => $class->course_no,
-            'class_descriptive_title' => $class->descriptive_title,
-            'department' => $user->department,
-            'added_by_id' => $user->studentID,
-            'added_by_name' => $user->name,
-            'status_from_added' => 'unchecked',
-            'status_from_target' => 'unchecked',
-            'created_at' => now(),
-            'updated_at' => now(),
+            'notif_type'               => 'Class grades have been rejected by the registrar. Please review them.',
+            'class_id'                 => $class->id,
+            'course_no'                => $class->course_no,
+            'class_descriptive_title'  => $class->descriptive_title,
+            'department'               => $user->department,
+            'added_by_id'              => $user->studentID,
+            'added_by_name'            => $user->name,
+            'status_from_added'        => 'unchecked',
+            'status_from_target'       => 'unchecked',
+            'created_at'               => now(),
+            'updated_at'               => now(),
         ];
 
         DB::table('notif_table')->insert(array_merge($baseNotif, [
-            'target_by_id' => $dean->studentID ?? null,
+            'target_by_id'   => $dean->studentID ?? null,
             'target_by_name' => $dean->name ?? null,
         ]));
 
         DB::table('notif_table')->insert(array_merge($baseNotif, [
-            'target_by_id' => $instructor->studentID ?? null,
+            'target_by_id'   => $instructor->studentID ?? null,
             'target_by_name' => $instructor->name ?? null,
         ]));
 
@@ -1806,11 +1837,12 @@ public function submitDecisionRegistrar(Request $request)
     }
 
     /*
-    |--------------------------------------------------------------------------|
+    |--------------------------------------------------------------------------
     | ✅ APPROVED BY REGISTRAR
-    |--------------------------------------------------------------------------|
+    |--------------------------------------------------------------------------
     */
     if ($request->registrar_status === 'Approved') {
+
         if (empty($request->grades)) {
             return back()->with('error', 'No students selected.');
         }
@@ -1819,6 +1851,7 @@ public function submitDecisionRegistrar(Request $request)
         $classIDs = [];
 
         foreach ($request->grades as $grade) {
+
             $studentInfo = Classes_Student::where('studentID', $grade['studentID'])
                 ->where('department', $selectedDepartment)
                 ->first();
@@ -1826,99 +1859,71 @@ public function submitDecisionRegistrar(Request $request)
             if (!$studentInfo) continue;
 
             $classInfo = Classes::find($grade['classID']);
-            $courseNo = optional($classInfo)->course_no;
-            $descriptiveTitle = optional($classInfo)->descriptive_title;
-            $units = optional($classInfo)->units;
-            $schedule = optional($classInfo)->schedule;
-            $instructor = optional($classInfo)->instructor;
-            $academicYear = optional($classInfo)->academic_year;
-            $academicPeriod = optional($classInfo)->academic_period;
-            $addedby = optional($classInfo)->added_by;
-            $program = optional($classInfo)->program;
-            $abbreviation = $studentInfo->abbreviation; // ✅ abbreviation
 
-            // -----------------------------
-            // Archive quizzes & scores
-            // -----------------------------
-            $quizzesScores = DB::table('quizzes_scores')
+            /*
+            |--------------------------------------------------------------------------
+            | FETCH FINAL GRADE (SOURCE OF final_remark)
+            |--------------------------------------------------------------------------
+            */
+            $finalGradeRow = DB::table('final_grade')
                 ->where('classID', $grade['classID'])
                 ->where('studentID', $grade['studentID'])
-                ->get();
+                ->first();
 
-            foreach ($quizzesScores as $score) {
-                $percentageData = DB::table('percentage')->where('classID', $score->classID)->first();
-
-                DB::table('archived_quizzesandscores')->insert([
-                    'classID' => $score->classID,
-                    'course_no' => $courseNo,
-                    'descriptive_title' => $descriptiveTitle,
-                    'units' => $units,
-                    'instructor' => $instructor,
-                    'studentID' => $score->studentID,
-                    'periodic_term' => $score->periodic_term,
-                    'quiz_percentage' => $percentageData->quiz_percentage ?? null,
-                    'quiz_total_score' => $percentageData->quiz_total_score ?? null,
-                    'quizzez' => $score->quizzez,
-                    'attendance_percentage' => $percentageData->attendance_percentage ?? null,
-                    'attendance_total_score' => $percentageData->attendance_total_score ?? null,
-                    'attendance_behavior' => $score->attendance_behavior,
-                    'assignment_percentage' => $percentageData->assignment_percentage ?? null,
-                    'assignment_total_score' => $percentageData->assignment_total_score ?? null,
-                    'assignments' => $score->assignments,
-                    'exam_percentage' => $percentageData->exam_percentage ?? null,
-                    'exam_total_score' => $percentageData->exam_total_score ?? null,
-                    'exam' => $score->exam,
-                    'academic_period' => $academicPeriod,
-                    'academic_year' => $academicYear,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            DB::table('quizzes_scores')
-                ->where('classID', $grade['classID'])
-                ->where('studentID', $grade['studentID'])
-                ->delete();
-
-            // -----------------------------
-            // Archive final grades & logs
-            // -----------------------------
+            /*
+            |--------------------------------------------------------------------------
+            | ARCHIVE FINAL GRADE
+            |--------------------------------------------------------------------------
+            */
             $finalGradeData = [
-                'classID' => $grade['classID'],
-                'studentID' => $grade['studentID'],
-                'course_no' => $courseNo,
-                'descriptive_title' => $descriptiveTitle,
-                'units' => $units,
-                'schedule' => $schedule,
-                'instructor' => $instructor,
-                'academic_year' => $academicYear,
-                'academic_period' => $academicPeriod,
-                'department' => $selectedDepartment,
-                'program' => $program,
-                'abbreviation' => $abbreviation, // ✅ Save abbreviation
-                'name' => $studentInfo->name,
-                'gender' => $studentInfo->gender,
-                'email' => $studentInfo->email,
-                'prelim' => $grade['prelim'],
-                'midterm' => $grade['midterm'],
-                'semi_finals' => $grade['semi_finals'],
-                'final' => $grade['final'],
-                'remarks' => $grade['remarks'],
-                'status' => 'Approved',
-                'added_by' => $addedby,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'classID'          => $grade['classID'],
+                'studentID'        => $grade['studentID'],
+                'course_no'        => $classInfo->course_no,
+                'descriptive_title'=> $classInfo->descriptive_title,
+                'units'            => $classInfo->units,
+                'schedule'         => $classInfo->schedule,
+                'instructor'       => $classInfo->instructor,
+                'academic_year'    => $classInfo->academic_year,
+                'academic_period'  => $classInfo->academic_period,
+                'department'       => $selectedDepartment,
+                'program'          => $classInfo->program,
+                'abbreviation'     => $studentInfo->abbreviation,
+                'name'             => $studentInfo->name,
+                'gender'           => $studentInfo->gender,
+                'email'            => $studentInfo->email,
+                'prelim'           => $finalGradeRow->prelim ?? null,
+                'midterm'          => $finalGradeRow->midterm ?? null,
+                'semi_finals'      => $finalGradeRow->semi_finals ?? null,
+                'final'            => $finalGradeRow->final ?? null,
+                'remarks'          => $finalGradeRow->remarks ?? null,
+                'final_remark'     => $finalGradeRow->final_remark ?? null,
+                'status'           => 'Approved',
+                'added_by'         => $classInfo->added_by,
+                'created_at'       => now(),
+                'updated_at'       => now(),
             ];
 
             DB::table('archived_final_grades')->insert($finalGradeData);
             DB::table('grade_logs')->insert($finalGradeData);
 
-            // Remove student from classes_student & final_grade
+            /*
+            |--------------------------------------------------------------------------
+            | CLEANUP
+            |--------------------------------------------------------------------------
+            */
+            // Delete from classes_student
             Classes_Student::where('studentID', $grade['studentID'])
                 ->where('classID', $grade['classID'])
                 ->delete();
 
+            // Delete from final_grade
             DB::table('final_grade')
+                ->where('classID', $grade['classID'])
+                ->where('studentID', $grade['studentID'])
+                ->delete();
+
+            // ✅ DELETE raw_grades
+            DB::table('raw_grades')
                 ->where('classID', $grade['classID'])
                 ->where('studentID', $grade['studentID'])
                 ->delete();
@@ -1926,61 +1931,30 @@ public function submitDecisionRegistrar(Request $request)
             $classIDs[] = $grade['classID'];
         }
 
-        // -----------------------------
-        // Notify Dean & Instructor
-        // -----------------------------
-        if (stripos($request->department, 'education') !== false) {
-            $users = User::whereRaw('LOWER(department) LIKE ?', ['%education%'])->get();
-        } else {
-            $users = User::where('department', $request->department)->get();
-        }
-
-        $dean = $users->first(fn($u) => in_array('dean', array_map('trim', explode(',', $u->role))));
-        $instructor = User::where('name', $class->instructor)->first();
-
-        $baseNotif = [
-            'notif_type' => 'Class grades have been approved by the registrar, please check your archive',
-            'class_id' => $class->id,
-            'course_no' => $class->course_no,
-            'class_descriptive_title' => $class->descriptive_title,
-            'department' => $user->department ?? null,
-            'added_by_id' => $user->studentID,
-            'added_by_name' => $user->name,
-            'status_from_added' => 'unchecked',
-            'status_from_target' => 'unchecked',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
-
-        DB::table('notif_table')->insert(array_merge($baseNotif, [
-            'target_by_id' => $dean->studentID ?? null,
-            'target_by_name' => $dean->name ?? null,
-        ]));
-
-        DB::table('notif_table')->insert(array_merge($baseNotif, [
-            'target_by_id' => $instructor->studentID ?? null,
-            'target_by_name' => $instructor->name ?? null,
-        ]));
-
-        // -----------------------------
-        // Delete class if no students remain
-        // -----------------------------
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE CLASS IF NO STUDENTS REMAIN
+        |--------------------------------------------------------------------------
+        */
         $classHasStudents = Classes_Student::whereIn('classID', $classIDs)->exists();
         if (!$classHasStudents) {
             Classes::whereIn('id', $classIDs)->delete();
         }
 
-        // Update class status
         Classes::where('id', $request->classID)
-            ->update(['status' => 'The Registrar approved the submitted grade of ' . $selectedDepartment . ' department']);
+            ->update([
+                'status' => 'The Registrar approved the submitted grade of ' . $selectedDepartment . ' department'
+            ]);
 
         return redirect()->route('registrar_classes')
             ->with('success', 'Final grades for ' . $selectedDepartment . ' have been submitted successfully!');
     }
 
-    // -----------------------------
-    // UPDATE FINAL GRADE TABLE FOR BOTH STATUS
-    // -----------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | FALLBACK UPDATE
+    |--------------------------------------------------------------------------
+    */
     DB::table('final_grade')
         ->where('classID', $request->classID)
         ->where('department', $request->department)
@@ -1988,6 +1962,7 @@ public function submitDecisionRegistrar(Request $request)
 
     return back()->with('success', 'Registrar’s decision has been submitted successfully!');
 }
+
 
 
 

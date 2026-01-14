@@ -21,5 +21,8 @@ class Student extends Model
         'year_level',
         'nationality',
         'batch_year',
+        'major',
     ];
+
+    
 }

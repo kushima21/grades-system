@@ -21,6 +21,7 @@ class StudentController extends Controller
             'year_level'   => 'required|integer',
             'nationality'  => 'required|string|max:100',
             'batch_year'   => 'required|string|max:50',
+            'major'   => 'nullable|string|max:100',
         ]);
 
         Student::create([
@@ -35,6 +36,7 @@ class StudentController extends Controller
             'year_level'   => $request->year_level,
             'nationality'  => $request->nationality,
             'batch_year'   => $request->batch_year,
+            'major'   => $request->major,
         ]);
 
         return redirect()->back()->with('success', 'Student successfully added!');

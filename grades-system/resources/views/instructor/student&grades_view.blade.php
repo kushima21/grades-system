@@ -116,25 +116,34 @@
 
                 {{-- ---------- TABLE BODY ---------- --}}
                 <tbody>
-                @foreach($students as $g)
-                    <tr>
-                        <td>{{ $g->name }}</td>
-                        <td>{{ $g->department }}</td>
-                        <td>{{ $g->midterm_raw ?? '-' }}</td>
+@foreach($students as $g)
+    <tr>
+        <td>{{ $g->name }}</td>
+        <td>{{ $g->department }}</td>
 
-                        @if($class->academic_period !== 'Summer')
-                            <td class="raw-col">{{ $g->midterm_raw ?? '-' }}</td>
-                            <td>{{ $g->midterm ?? '-' }}</td>
-                            <td class="raw-col">{{ $g->semi_finals_raw ?? '-' }}</td>
-                            <td>{{ $g->semi_finals ?? '-' }}</td>
-                        @endif
+        {{-- Prelim --}}
+        @if($class->academic_period !== 'Summer')
+            <td>{{ $g->prelim ?? '-' }}</td>
+        @endif
 
-                        <td class="raw-col">{{ $g->final_raw ?? '-' }}</td>
-                        <td>{{ $g->final ?? '-' }}</td>
-                        <td>{{ $g->remarks ?? '-' }}</td>
-                    </tr>
-                @endforeach
-                </tbody>
+        {{-- Midterm Raw and Midterm --}}
+        @if($class->academic_period !== 'Summer')
+            <td class="raw-col">{{ $g->midterm_raw ?? '-' }}</td>
+            <td>{{ $g->midterm ?? '-' }}</td>
+
+            {{-- Semi Finals --}}
+            <td class="raw-col">{{ $g->semi_finals_raw ?? '-' }}</td>
+            <td>{{ $g->semi_finals ?? '-' }}</td>
+        @endif
+
+        {{-- Final --}}
+        <td class="raw-col">{{ $g->final_raw ?? '-' }}</td>
+        <td>{{ $g->final ?? '-' }}</td>
+        <td>{{ $g->remarks ?? '-' }}</td>
+    </tr>
+@endforeach
+</tbody>
+
 
             </table>
 

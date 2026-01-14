@@ -48,6 +48,7 @@
         left: 35%;
         background: #fff;
         border-radius: 12px;
+        display: none;
     }
 
     .student-header {

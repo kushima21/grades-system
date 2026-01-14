@@ -156,4 +156,6 @@ foreach ($grades as $grade) {
         // Output PDF
         $pdf->Output('grades.pdf', 'I');
     }
+
+    
 }

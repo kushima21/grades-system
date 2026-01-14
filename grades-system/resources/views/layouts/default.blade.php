@@ -110,11 +110,14 @@
                                 </a>
                             </div>
 
-                             <div class="manage-links">
-                                <a href="{{ url('/academic_grades_archive') }}">
-                                    <span>Academic Grades Archived</span>
-                                </a>
-                            </div>
+                             @if(Auth::check() && Auth::user()->role === 'registrar')
+                                <div class="manage-links">
+                                    <a href="{{ url('/academic_grades_archive') }}">
+                                        <span>Academic Grades Archived</span>
+                                    </a>
+                                </div>
+                            @endif
+
 
                              <div class="manage-links">
                                 <a href="{{ url('/student_grades_archive') }}   ">

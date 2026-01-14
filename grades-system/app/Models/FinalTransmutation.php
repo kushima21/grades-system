@@ -16,5 +16,6 @@ class FinalTransmutation extends Model
         'grades',
         'transmutation',
         'remarks',
+        'final_remark',
     ];
 }

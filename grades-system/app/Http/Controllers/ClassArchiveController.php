@@ -9,6 +9,7 @@ use App\Models\ArchivedFinalGrade;
 use App\Models\Classes;
 use App\Models\User;
 use TCPDF;
+use App\Models\Student;
 
 
 class CustomPDF extends TCPDF
@@ -85,11 +86,6 @@ class ClassArchiveController extends Controller
 
     return view('instructor.my_class_archive', compact('archivedData', 'uniqueInstructors', 'finalGrades'));
 }
-
-
-
-
-
 
 
 
@@ -339,5 +335,69 @@ if (in_array($abbrUpper, $educationAbbreviations)) {
     $pdf->Output('gradesheet.pdf', 'I');
     exit;
 }
+
+
+public function academicGradesArchive()
+{
+    // Fetch all archived grades with student relationship
+    $archivedGrades = ArchivedFinalGrade::with('student')->get();
+
+    // Group by academic year -> academic period -> department
+    $archivedData = $archivedGrades
+        ->groupBy('academic_year')
+        ->map(function ($yearGroup) {
+            return $yearGroup->groupBy('academic_period')
+                ->map(function ($periodGroup) {
+                    return $periodGroup->groupBy('department');
+                });
+        });
+
+    return view('registrar.academic_grades_archive', compact('archivedData'));
+}
+
+
+public function generateAcademicGradesPDF(Request $request)
+{
+    $archivedGrades = ArchivedFinalGrade::with('student')->get();
+
+    $archivedData = $archivedGrades
+        ->groupBy('academic_year')
+        ->map(function ($yearGroup) {
+            return $yearGroup->groupBy('academic_period')
+                ->map(function ($periodGroup) {
+                    return $periodGroup->groupBy('department');
+                });
+        });
+
+    // ✅ LONG BOND PAPER (8.5 x 13 inches) in MM → 216 x 330
+    // ✅ LANDSCAPE
+    $pdf = new CustomPDF('L', 'mm', [420, 240], true, 'UTF-8', false);
+    $pdf->SetMargins(15, 15, 15);
+    $pdf->SetAutoPageBreak(true, 15);
+
+    // ================= FIRST PAGE (COVER) =================
+    $pdf->AddPage();
+
+    $coverHtml = view(
+        'registrar.academic_grades_archive_cover',
+        compact('archivedData')
+    )->render();
+
+    $pdf->writeHTML($coverHtml, true, false, true, false, '');
+
+    // ================= SECOND PAGE (TABLE) =================
+    $pdf->AddPage();
+
+    $tableHtml = view(
+        'registrar.academic_grades_archive_pdf',
+        compact('archivedData')
+    )->render();
+
+    $pdf->writeHTML($tableHtml, true, false, true, false, '');
+
+    $pdf->Output('Academic_Grades_Archive.pdf', 'I');
+    exit;
+}
+
 
 }

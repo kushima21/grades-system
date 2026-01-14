@@ -16,20 +16,20 @@
             Students Account
         </h2>
 
-         <div class="student-modal-container">
+         <div class="student-modal-container" id="studentModal">
             <h3 class="student-header">
                 Student Information
             </h3>
             <div class="student-account-form-container">
                 @if ($errors->any())
-    <div style="color:red; margin-bottom:10px;">
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
+                    <div style="color:red; margin-bottom:10px;">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 <form method="POST" action="{{ route('students.store') }}">
                     @csrf
                     <div class="student-form-box-container">
@@ -89,6 +89,17 @@
                                 <input type="text" name="nationality" id="nationality" placeholder="Enter Nationality...">
                             </div>
                             <div class="form-info">
+                                <label>Major</label>
+                            <select name="major">
+                                <option value="">Select Major</option>
+                                <option value="">N/A</option>
+                                <option value="Mathematics">Mathematics</option>
+                                <option value="English">English</option>
+                                <option value="Finance Management">Financial Management</option>
+                                <option value="Operations Management">Operations Management</option>
+                            </select>
+                            </div>
+                            <div class="form-info">
                                 <label>Batch Year:</label>
                                 <input type="text" name="batch_year" id="batch_year" placeholder="Enter Batch Year...">
                             </div>
@@ -98,7 +109,7 @@
                             </div>
                              <div class="studentBtn">
                         <button type="submit" name="submit">Submit</button>
-                        <button type="button">Cancel</button>
+                        <button type="button" id="closeModalBtn">Cancel</button>
                     </div>
                     </div>
                 </form>
@@ -112,7 +123,7 @@
         
         <div class="student-table-wrapper-container">
              <div class="iconBtbn">
-                <span class="fa-stack fa-2x iconBtn">
+                <span class="fa-stack fa-2x iconBtn" id="openModalBtn">
                     <!-- Circle background -->
                 <i class="fa-solid fa-circle fa-stack-2x circle-bg"></i>
                     <!-- Layers icon -->
@@ -166,5 +177,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
+<script>
+const openBtn = document.getElementById('openModalBtn');
+const closeBtn = document.getElementById('closeModalBtn');
+const modal = document.getElementById('studentModal');
 
+openBtn.addEventListener('click', () => {
+    modal.style.display = 'block';
+});
+
+closeBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+});
+</script>
 @endsection

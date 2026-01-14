@@ -14,5 +14,6 @@ class FinalGrade extends Model
         'course_id',
         'grade',
         'remarks',
+        'final_remark',
     ];
 }

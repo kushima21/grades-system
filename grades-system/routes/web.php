@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ArchivedFinalGrade;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
     AuthController,
@@ -97,6 +98,10 @@ Route::get('/my_class', [InstructorController::class, 'index'])->name('instructo
 Route::get('/my_class_archive', [ClassArchiveController::class, 'index'])->name('instructor.my_class_archive');
 Route::get('/grading&score', [InstructorController::class, 'grading'])->name('instructor.grading&score');
 Route::get('/student_grades', [InstructorController::class, 'studentGrades'])->name('instructor.student_grades');
+Route::get('/academic_grades_archive',
+    [ClassArchiveController::class, 'academicGradesArchive']
+)->name('registrar.academic_grades_archive');
+
 
 Route::get('/instructor/classes/{id}/grades', [RegistrarController::class, 'studentGradesView'])->name('instructor.student_grades_view');
 Route::get('/instructor/classes/{id}/grades/{academic_period}', [RegistrarController::class, 'studentGradesView'])->name('student.grades.view');
@@ -191,7 +196,8 @@ Route::put('/classes/class={class}', [RegistrarController::class, 'addPercentage
 Route::get('/quizzesadded/class={class}', [RegistrarController::class, 'show'])->name('class.quizzes');
 Route::put('/quizzesadded/class={class}', [RegistrarController::class, 'addQuizAndScore'])->name('class.addquizandscore');
 Route::post('/classes/edit/{class}', [RegistrarController::class, 'EditClass'])->name('classes.edit');
-Route::post('/classes/delete/{class}', [RegistrarController::class, 'DeleteClass'])->name('class.delete');
+Route::delete('/classes/delete/{class}', [RegistrarController::class, 'DeleteClass'])
+    ->name('classes.delete');
 
 
 
@@ -271,3 +277,8 @@ Route::post('/class/{class}/students/bulk-remove', [RegistrarController::class, 
 
     Route::post('/students/store', [StudentController::class, 'store'])
      ->name('students.store');
+
+
+Route::post('/registrar/academic-grades-archive/pdf',
+    [ClassArchiveController::class, 'generateAcademicGradesPDF']
+)->name('registrar.academic_grades_archive.pdf');
